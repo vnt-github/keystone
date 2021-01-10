@@ -1,1 +1,1 @@
-UCI MCS capstone project
+UCI MCS keystone project
