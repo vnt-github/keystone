@@ -28,3 +28,18 @@
         - faster
     - search contains text and neighbour.
         - more robut to changes in the structure of the html
+
+- itmes: https://towardsdatascience.com/a-minimalist-end-to-end-scrapy-tutorial-part-ii-b917509b73f7
+    - experimented with the items pipelines.
+    - seperation of concerp paradigm.
+        - faster modifiability
+        - add pre post processing
+        - prefereed structure to save info in files. "export file".
+        - db preferrably.
+        - we don't want to create a csv
+            - creating code to handle csv
+            - large data may need to be kept in memory, which data can handle
+            - much more from link above.
+
+- benchmarks
+    - 2001 all profiles 6 minutes. (6:26.48)

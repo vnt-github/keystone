@@ -1,12 +1,16 @@
-# Define here the models for your scraped items
-#
-# See documentation in:
-# https://docs.scrapy.org/en/latest/topics/items.html
+from scrapy.item import Item, Field
 
-import scrapy
+class Fundamentals(Item):
+    symbol = Field()
+    low_price = Field()
+    high_price = Field()
+    price = Field()
+    shares_outstanding = Field()
+    daily_volume = Field()
+    book_value_mrq = Field()
+    earnings_ttm = Field()
+    earnings_mrq = Field()
+    earnings_ttm_per_price = Field()
+    earnings_mrq_per_price = Field()
+    
 
-
-class ScrapyTutorialsItem(scrapy.Item):
-    # define the fields for your item here like:
-    # name = scrapy.Field()
-    pass

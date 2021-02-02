@@ -1,7 +1,7 @@
 import scrapy
-import numpy as np
 from os import walk
 from string import ascii_uppercase
+from scrapy_tutorials.items import Fundamentals
 
 class ProfilesSpider(scrapy.Spider):
     name = "profiles"
@@ -17,11 +17,6 @@ class ProfilesSpider(scrapy.Spider):
         # yield scrapy.Request(url='file:///home/vbharot/vnt_rog/p/A/AXSI.html')
         # yield scrapy.Request(url='file:///home/vbharot/vnt_rog/p/A/AWF.html')
         # yield scrapy.Request(url='file:///home/vbharot/vnt_rog/p/A/AXA.html')
-
-
-    def normal_distribution(self, high, low):
-        mean, standard_deviation = (high+low)/2, 0.1 # mean and standard deviation
-        return np.random.normal(mean, standard_deviation, 1)
 
     def get_symbol(self, response):
         """
@@ -111,39 +106,24 @@ class ProfilesSpider(scrapy.Spider):
             return
         return self.extract_value_from_key_sibling(shares_outstanding_selectors[0])
 
-    def normalize_by_price(self, value):
-        if not value: return
-        return value/self.normal_price
 
     def parse(self, response):
         try:
-            self.symbol = self.get_symbol(response)
-            low_price = self.extract_low_price(response)
-            print(f'symbol: {self.symbol} low_price: {low_price}')
-            high_price = self.extract_high_price(response)
-            print(f'symbol: {self.symbol} high_price: {high_price}')
+            fundamentals = Fundamentals()
+            fundamentals['symbol'] = self.get_symbol(response)
+            self.symbol = fundamentals['symbol']
+            fundamentals['low_price'] = self.extract_low_price(response)
+            fundamentals['high_price'] = self.extract_high_price(response)
+            fundamentals['shares_outstanding'] = self.extract_shares_outstanding(response)
 
-            if low_price is None or high_price is None:
-                print('\n')
-                return
-            else:
-                mid_price = (low_price+high_price)/2
-                normal_price = self.normal_distribution(high_price, low_price)[0]
-                self.normal_price = normal_price
-                print(f'symbol: {self.symbol} random price: {normal_price:.3f}\tmid price: {mid_price:.3f}')
-
-            shares_outstanding = self.extract_shares_outstanding(response)
-            self.shares_outstanding = shares_outstanding
-            print(f'symbol: {self.symbol} shares outstanding', shares_outstanding)
-            daily_volume = self.extract_daily_volume(response)
-            print(f'symbol: {self.symbol} Daily Volume (3-month avg): {daily_volume}')
-            book_value_mrq = self.extract_book_value_mrq(response)
-            print(f'symbol: {self.symbol} book value (ttm): {book_value_mrq}')
+            fundamentals['daily_volume'] = self.extract_daily_volume(response)
+            
+            fundamentals['book_value_mrq'] = self.extract_book_value_mrq(response)
+            
             # TODO: how to normalize book value
-            earnings_ttm = self.extract_earnings_ttm(response)
-            print(f'symbol: {self.symbol} earnings (ttm): {earnings_ttm} normalize by price: {self.normalize_by_price(earnings_ttm)}')
-            earnings_mrq = self.extract_earnings_mrq(response)
-            print(f'symbol: {self.symbol} earnings (mrq): {earnings_mrq} normalize by price: {self.normalize_by_price(earnings_mrq)}\n')
+            fundamentals['earnings_ttm'] = self.extract_earnings_ttm(response)
+            fundamentals['earnings_mrq'] = self.extract_earnings_mrq(response)
+            yield fundamentals
         except Exception as err:
             print('err', err)
 
