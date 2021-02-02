@@ -7,12 +7,18 @@ class ProfilesSpider(scrapy.Spider):
     name = "profiles"
     path_prefix = '/home/vbharot/vnt_rog/p/'
     def start_requests(self):
-        for alphabet in ["A"]:
+        for alphabet in ascii_uppercase:
             mypath = self.path_prefix + alphabet
             for (dirpath, dirnames, filenames) in walk(mypath):
                 for filename in filenames:
                     yield scrapy.Request(url=f'file://{mypath}/{filename}')
-    
+        # yield scrapy.Request(url='file:///home/vbharot/vnt_rog/p/A/ATSI.html')
+        # yield scrapy.Request(url='file:///home/vbharot/vnt_rog/p/A/AWK.html')
+        # yield scrapy.Request(url='file:///home/vbharot/vnt_rog/p/A/AXSI.html')
+        # yield scrapy.Request(url='file:///home/vbharot/vnt_rog/p/A/AWF.html')
+        # yield scrapy.Request(url='file:///home/vbharot/vnt_rog/p/A/AXA.html')
+
+
     def normal_distribution(self, high, low):
         mean, standard_deviation = (high+low)/2, 0.1 # mean and standard deviation
         return np.random.normal(mean, standard_deviation, 1)
@@ -25,35 +31,119 @@ class ProfilesSpider(scrapy.Spider):
         end_i = response.request.url.rfind('.')
         return response.request.url[start_i+1:end_i]
 
+    @staticmethod
+    def convert_str_to_number(num):
+        try:
+            char_map = {'K':1000, 'M':1000000, 'B':1000000000}
+            num = num.replace(',', '')
+            if num and num[-1] in char_map.keys():
+                return float(num[:-1]) * char_map[num[-1].upper()]
+            else:
+                return float(num)
+        except Exception as err:
+            raise err
+
+    def extract_value_from_key_sibling(self, key_selector):
+        try:
+            sign = -1 if key_selector.xpath("./following-sibling::td/text()").get() == '-' else 1
+            value = key_selector.xpath("./following-sibling::td/tt/text()").get()
+            if not value: return
+            return sign*self.convert_str_to_number(value)
+        except Exception as err:
+            print('sibling extraction err', err)
+
     def extract_low_price(self, response):
         """
         Return extracted low price by from profile
         """
-        low_price_selector = response.xpath("//*[contains(text(), '52-Week Low')]/following-sibling::td/tt/text()")
-        if not low_price_selector:
-            print(f'symbol: {self.get_symbol(response)} missing 52-Week Low')
+        low_price_selectors = response.xpath("//*[contains(text(), '52-Week Low')]")
+        if not low_price_selectors:
+            print(f'symbol: {self.symbol} missing 52-Week Low')
             return
-        return float(low_price_selector.get().strip())
+        return self.extract_value_from_key_sibling(low_price_selectors[0])
 
     def extract_high_price(self, response):
         """
         Return extracted high price by from profile
         """
-        high_price_selector = response.xpath("//*[contains(text(), '52-Week High')]/following-sibling::td/tt/text()")
-        if not high_price_selector:
-            print(f'symbol: {self.get_symbol(response)} missing 52-Week High')
+        high_price_selectors = response.xpath("//*[contains(text(), '52-Week High')]")
+        if not high_price_selectors:
+            print(f'symbol: {self.symbol} missing 52-Week High')
             return
-        return float(high_price_selector.get().strip())
+        return self.extract_value_from_key_sibling(high_price_selectors[0])
+
+    def extract_book_value_mrq(self, response):
+        book_value_mrq_selectors = response.xpath("//*[contains(text(), 'Book Value')]/*[contains(text(), '(mrq)')]/..")
+        if not book_value_mrq_selectors:
+            print(f'symbol: {self.symbol} missing Book Value (mrq)')
+            return
+        return self.extract_value_from_key_sibling(book_value_mrq_selectors[0])
+
+    def extract_earnings_ttm(self, response):
+        earnings_ttm_selectors = response.xpath("//*[contains(text(), 'Earnings')]/*[contains(text(), '(ttm)')]/..")
+        if not earnings_ttm_selectors:
+            print(f'symbol: {self.symbol} missing Earnings (ttm)')
+            return
+
+        return self.extract_value_from_key_sibling(earnings_ttm_selectors[0])
+   
+    def extract_earnings_mrq(self, response):
+        earnings_mrq_selectors = response.xpath("//*[contains(text(), 'Earnings')]/*[contains(text(), '(mrq)')]/..")
+        if not earnings_mrq_selectors:
+            print(f'symbol: {self.symbol} missing Earnings (mrq)')
+            return
+
+        return self.extract_value_from_key_sibling(earnings_mrq_selectors[0])
+
+    # TODO: finalize 3-month or 10-day average
+    def extract_daily_volume(self, response):
+        daily_volume_selectors = response.xpath("//*[contains(text(), 'Daily Volume')]/*[contains(text(), '(3-month\xa0avg)')]/..")
+        if not daily_volume_selectors:
+            print(f'symbol: {self.symbol} missing Daily Volume (3-month avg)')
+            return
+        return self.extract_value_from_key_sibling(daily_volume_selectors[0])
+
+
+    def extract_shares_outstanding(self, response):
+        shares_outstanding_selectors = response.xpath("//*[contains(text(), 'Shares Outstanding')]")
+        if not shares_outstanding_selectors:
+            print(f'symbol: {self.symbol} missing Shares Outstanding')
+            return
+        return self.extract_value_from_key_sibling(shares_outstanding_selectors[0])
+
+    def normalize_by_price(self, value):
+        if not value: return
+        return value/self.normal_price
 
     def parse(self, response):
         try:
+            self.symbol = self.get_symbol(response)
             low_price = self.extract_low_price(response)
-            if not low_price: return
+            print(f'symbol: {self.symbol} low_price: {low_price}')
             high_price = self.extract_high_price(response)
-            if not high_price: return
-            mid_price = (low_price+high_price)/2
-            normal_price = self.normal_distribution(high_price, low_price)[0]
-            print(f'symbol: {self.get_symbol(response)}\t52-Week Low: {low_price}\t52-Week High: {high_price}\trandom price: {normal_price:.3f}\tmid price: {mid_price:.3f}')
+            print(f'symbol: {self.symbol} high_price: {high_price}')
+
+            if low_price is None or high_price is None:
+                print('\n')
+                return
+            else:
+                mid_price = (low_price+high_price)/2
+                normal_price = self.normal_distribution(high_price, low_price)[0]
+                self.normal_price = normal_price
+                print(f'symbol: {self.symbol} random price: {normal_price:.3f}\tmid price: {mid_price:.3f}')
+
+            shares_outstanding = self.extract_shares_outstanding(response)
+            self.shares_outstanding = shares_outstanding
+            print(f'symbol: {self.symbol} shares outstanding', shares_outstanding)
+            daily_volume = self.extract_daily_volume(response)
+            print(f'symbol: {self.symbol} Daily Volume (3-month avg): {daily_volume}')
+            book_value_mrq = self.extract_book_value_mrq(response)
+            print(f'symbol: {self.symbol} book value (ttm): {book_value_mrq}')
+            # TODO: how to normalize book value
+            earnings_ttm = self.extract_earnings_ttm(response)
+            print(f'symbol: {self.symbol} earnings (ttm): {earnings_ttm} normalize by price: {self.normalize_by_price(earnings_ttm)}')
+            earnings_mrq = self.extract_earnings_mrq(response)
+            print(f'symbol: {self.symbol} earnings (mrq): {earnings_mrq} normalize by price: {self.normalize_by_price(earnings_mrq)}\n')
         except Exception as err:
             print('err', err)
 
