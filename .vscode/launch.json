@@ -1,0 +1,19 @@
+{
+    "configurations": [
+      {
+          "name": "Python: Scrapy",
+          "type": "python",
+          "request": "launch",
+          "module": "scrapy",
+          "cwd": "${fileDirname}",
+          "args": [
+              "crawl",
+              "profiles",
+              // "${fileBasenameNoExtension}",
+              "--loglevel=ERROR",
+            //   "--output=/home/vbharot/keystone/tmp/results.jsonlines"
+          ],
+          "console": "integratedTerminal",
+          "justMyCode": false
+      }
+    ]
