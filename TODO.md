@@ -43,3 +43,14 @@
 
 - benchmarks
     - 2001 all profiles 6 minutes. (6:26.48)
+
+- stocks movement: https://www.youtube.com/watch?v=R3zVC7mFzDA
+- http://blog.ditullio.fr/2015/12/24/hadoop-basics-filter-aggregate-sort-mapreduce/
+
+- hadoop fs -rm -r /wordcount/output_pydoop && pydoop script script.py /wordcount/input/ /wordcount/output_pydoop
+- hadoop fs -cat /wordcount/output_pydoop/part-r-00000
+
+- file:///C:/Users/asus/Downloads/Pydoop_a_Python_MapReduce_and_HDFS_API_for_Hadoop.pdf
+- https://gist.github.com/alexwoolford/996f186c539f05ce1589
+
+

@@ -12,5 +12,10 @@ class Fundamentals(Item):
     earnings_mrq = Field()
     earnings_ttm_per_price = Field()
     earnings_mrq_per_price = Field()
+    return_on_asset = Field()
+    total_cash = Field()
+    earnings_growth = Field()
+    earnings_growth_industry = Field()
+    cash_mrq = Field()
     
 
