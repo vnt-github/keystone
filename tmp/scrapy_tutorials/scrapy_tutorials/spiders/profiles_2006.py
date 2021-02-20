@@ -1,4 +1,5 @@
 import scrapy
+import re
 from os import walk
 from string import ascii_lowercase
 from scrapy_tutorials.items import Fundamentals
@@ -6,7 +7,7 @@ from scrapy_tutorials.items import Fundamentals
 class ProfilesSpider(scrapy.Spider):
     name = "profiles_2006"
     #Change it before running.
-    path_prefix = 'E:/UCI/Winter 2021/Keystone Project/Stock Data/2006-10/2006/10/profiles/Yahoo/US/01/p/'
+    path_prefix = '/mnt/c/stocks_data/2006/10/profiles/Yahoo/US/01/p/'
     def start_requests(self):
         for alphabet in ascii_lowercase:
             mypath = self.path_prefix + alphabet
@@ -20,6 +21,12 @@ class ProfilesSpider(scrapy.Spider):
         # yield scrapy.Request(url='file:///home/vbharot/vnt_rog/p/A/AWF.html')
         # yield scrapy.Request(url='file:///home/vbharot/vnt_rog/p/A/AXA.html')
 
+        # yield scrapy.Request(url='file:///mnt/c/stocks_data/2006/10/profiles/Yahoo/US/01/p/A/AWF.html')
+        # yield scrapy.Request(url='file:///mnt/c/stocks_data/2006/10/profiles/Yahoo/US/01/p/A/AXA.html')
+        # yield scrapy.Request(url='file:///mnt/c/stocks_data/2006/10/profiles/Yahoo/US/01/p/j/JNJ.html')
+        # yield scrapy.Request(url='file:///mnt/c/stocks_data/2006/10/profiles/Yahoo/US/01/p/I/IBM.html')
+
+
     def get_symbol(self, response):
         """
         Return symbol associated
@@ -28,17 +35,23 @@ class ProfilesSpider(scrapy.Spider):
         end_i = response.request.url.rfind('.')
         return response.request.url[start_i+1:end_i]
 
+    def extract_growth_value_from_siblings(self, key_selector):
+        value = key_selector.xpath("./following-sibling::td/text()").get()
+        industry = key_selector.xpath("./following-sibling::td[5]/text()").get()
+        return self.convert_str_to_number(value) if value != 'N/A' else None, self.convert_str_to_number(industry) if industry != 'N/A' else None
+
     @staticmethod
     def convert_str_to_number(num):
         try:
             char_map = {'K':1000, 'M':1000000, 'B':1000000000}
-            num = num.replace(',', '')
+            num = re.sub("[,%)()]", "", num)
             if num and num[-1] in char_map.keys():
                 return float(num[:-1]) * char_map[num[-1].upper()]
             else:
                 return float(num)
         except Exception as err:
-            raise err
+            print(f'err: convert_str_to_number: {num}', err)
+            return
 
     def extract_value_from_key_sibling(self, key_selector):
         try:
@@ -120,6 +133,77 @@ class ProfilesSpider(scrapy.Spider):
             return
         return self.extract_value_from_key_sibling(shares_outstanding_selectors[0])
 
+    def extract_return_on_asset(self, response):
+        return_on_assets_selectors = response.xpath("//*[contains(text(), 'Return on Assets (ttm)')]")
+        if not return_on_assets_selectors:
+            print(f'symbol: {self.symbol} missing return on asset')
+            return
+        return self.extract_value_from_key_sibling(return_on_assets_selectors)
+
+    def extract_industry(self, response):
+        industry_selectors = response.xpath("//*[contains(text(), 'Industry:')]")
+        if not industry_selectors:
+            print(f'symbol: {self.symbol} missing Industry:')
+            return
+        return industry_selectors.xpath("../td[2]/a/text()").get()
+
+    def extract_operational_cash_flow(self, response):
+        operational_cash_flow_selectors = response.xpath("//*[contains(text(), 'Operating Cash Flow (ttm):')]")
+        if not operational_cash_flow_selectors:
+            print(f'symbol: {self.symbol} missing Operating Cash Flow (ttm):')
+            return
+        return self.extract_value_from_key_sibling(operational_cash_flow_selectors)
+
+    def extract_total_assets(self, response):
+        total_assets_selectors = response.xpath("//*[contains(text(), 'Total Assets')]/..")
+        if not total_assets_selectors:
+            print(f'symbol: {self.symbol} missing Total Assets')
+            return
+        return self.convert_str_to_number(total_assets_selectors.xpath("../td[2]/b/text()").get())
+
+    def extract_net_income(self, response):
+        net_income_selectors = response.xpath("//*[contains(text(), 'Net Income (ttm):')]")
+        if not net_income_selectors:
+            print(f'symbol: {self.symbol} missing Net Income (ttm):')
+            return
+        return self.extract_value_from_key_sibling(net_income_selectors)
+        
+    def extract_earnings_growth(self, response):
+        earnings_growth_selectors = response.xpath("//*[contains(text(), 'Qtrly Earnings Growth (yoy):')]")
+        if not earnings_growth_selectors:
+            print(f'symbol: {self.symbol} missing Qtrly Earnings Growth (yoy):')
+            return
+        return self.extract_value_from_key_sibling(earnings_growth_selectors)
+            
+
+    def extract_sales_growth(self, response):
+        sales_growth_selectors = response.xpath("//*[contains(text(), 'Sales Growth (year/est)')]")
+        if not sales_growth_selectors:
+            print(f'symbol: {self.symbol} missing Sales Growth (year/est)')
+            return
+        return self.extract_value_from_key_sibling(sales_growth_selectors)
+
+    def extract_revenue_growth(self, response):
+        revenue_growth_selectors = response.xpath("//*[contains(text(), 'Qtrly Rev Growth (yoy):')]")
+        if not revenue_growth_selectors:
+            print(f'symbol: {self.symbol} missing Qtrly Rev Growth (yoy):')
+            return (None, None)
+        return self.extract_growth_value_from_siblings(revenue_growth_selectors)
+
+    def extract_capital_expenditure(self, response):
+        capital_expenditure_selectors = response.xpath("//*[contains(text(), 'Capital Expenditures')]")
+        if not capital_expenditure_selectors:
+            print(f'symbol: {self.symbol} missing Capital Expenditures')
+            return
+        return self.extract_value_from_key_sibling(capital_expenditure_selectors)
+
+    def extract_rnd_expenditure(self, response):
+        rnd_expenditure_selectors = response.xpath("//*[contains(text(), 'Research Development')]")
+        if not rnd_expenditure_selectors:
+            print(f'symbol: {self.symbol} missing Research Development')
+            return
+        return self.extract_value_from_key_sibling(rnd_expenditure_selectors)
+
 
     def parse(self, response):
         try:
@@ -137,6 +221,17 @@ class ProfilesSpider(scrapy.Spider):
             # TODO: how to normalize book value
          #   fundamentals['earnings_ttm'] = self.extract_earnings_ttm(response)
          #   fundamentals['earnings_mrq'] = self.extract_earnings_mrq(response)
+
+            fundamentals['return_on_asset'] = self.extract_return_on_asset(response)
+            fundamentals['industry'] = self.extract_industry(response)
+            fundamentals['operational_cash_flow'] = self.extract_operational_cash_flow(response)
+            fundamentals['total_assets'] = self.extract_total_assets(response)
+            fundamentals['net_income'] = self.extract_net_income(response)
+            fundamentals['earnings_growth'] = self.extract_earnings_growth(response)
+            fundamentals['sales_growth'] = self.extract_sales_growth(response)
+            fundamentals['revenue_growth'], fundamentals['revenue_growth_industry'] = self.extract_revenue_growth(response)
+            fundamentals['capital_expenditure'] = self.extract_capital_expenditure(response) 
+            fundamentals['rnd_expenditure'] = self.extract_rnd_expenditure(response)
             yield fundamentals
         except Exception as err:
             print('err', err)

@@ -54,3 +54,4 @@
 - https://gist.github.com/alexwoolford/996f186c539f05ce1589
 
 
+- include investors average.
