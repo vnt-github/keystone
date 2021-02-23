@@ -61,14 +61,11 @@ def mapper(_, text, writer):
     # for word in text.split():
     data = json.loads(text)
     g_score = get_G_score(data)
-    value = float(data['low_price']) if data['low_price'] else 0
-    v1 = f'{value:.3f}'
-    # writer.emit(f'{v1:0>8}', data['symbol']+"_"+str(value))
-    writer.emit(f'{g_score}_{v1:0>8}', data['symbol']+"_"+str(g_score))
+    writer.emit(f"{g_score:0>2}_{data['symbol']: <10}", f"{g_score}_{data['symbol']}")
 
-def reducer(value, symbols, writer):
-    g_score, low_price = value.split('_')
-    writer.emit(next(symbols), str(float(low_price)))
+def reducer(keys, values, writer):
+    g_score, symbol = next(values).split('_')
+    writer.emit(symbol, g_score)
 
 # hadoop fs -copyFromLocal /mnt/c/ms@uci/295P/keystone/tmp/results.jsonlines /keystone/input_2/results_2
 

@@ -44,7 +44,7 @@ class ProfilesSpider(scrapy.Spider):
     def convert_str_to_number(num):
         try:
             char_map = {'K':1000, 'M':1000000, 'B':1000000000}
-            num = re.sub("[,%)()]", "", num)
+            num = re.sub("[,%)()$]", "", num)
             if num and num[-1] in char_map.keys():
                 return float(num[:-1]) * char_map[num[-1].upper()]
             else:
@@ -154,6 +154,7 @@ class ProfilesSpider(scrapy.Spider):
             return
         return self.extract_value_from_key_sibling(operational_cash_flow_selectors)
 
+    # TODO: calculate from the sum of all columns.
     def extract_total_assets(self, response):
         total_assets_selectors = response.xpath("//*[contains(text(), 'Total Assets')]/..")
         if not total_assets_selectors:
@@ -190,6 +191,7 @@ class ProfilesSpider(scrapy.Spider):
             return (None, None)
         return self.extract_growth_value_from_siblings(revenue_growth_selectors)
 
+    # TODO: calculate from the sum of all columns.
     def extract_capital_expenditure(self, response):
         capital_expenditure_selectors = response.xpath("//*[contains(text(), 'Capital Expenditures')]")
         if not capital_expenditure_selectors:
@@ -197,13 +199,79 @@ class ProfilesSpider(scrapy.Spider):
             return
         return self.extract_value_from_key_sibling(capital_expenditure_selectors)
 
+    # TODO: calculate from the sum of all columns.
     def extract_rnd_expenditure(self, response):
         rnd_expenditure_selectors = response.xpath("//*[contains(text(), 'Research Development')]")
         if not rnd_expenditure_selectors:
             print(f'symbol: {self.symbol} missing Research Development')
+            return    # to calculate the ∆ROA for f score
+    def extract_quarterly_total_assets(self, response):
+        q_total_assets_selectors = response.xpath("//*[contains(text(), 'Total Assets')]")
+        if not q_total_assets_selectors:
+            print(f'symbol: {self.symbol} missing Total Assets')
             return
+        return list(map(self.convert_str_to_number, q_total_assets_selectors[0].xpath("../../td/b/text()").getall()[1:]))
+        
         return self.extract_value_from_key_sibling(rnd_expenditure_selectors)
 
+
+    # to calculate the ∆ROA for f score
+    def extract_quarterly_net_income(self, response):
+        q_net_income_selectors = response.xpath("//*[contains(text(), 'Net Income Applicable To Common Shares')]")
+        if not q_net_income_selectors:
+            print(f'symbol: {self.symbol} missing Net Income Applicable To Common Shares')
+            return
+        return list(map(self.convert_str_to_number, q_net_income_selectors[0].xpath("../../td/b/text()").getall()[1:]))
+
+    # to calculate the ∆ROA for f score
+    def extract_quarterly_total_assets(self, response):
+        q_total_assets_selectors = response.xpath("//*[contains(text(), 'Total Assets')]")
+        if not q_total_assets_selectors:
+            print(f'symbol: {self.symbol} missing Total Assets')
+            return
+        return list(map(self.convert_str_to_number, q_total_assets_selectors[0].xpath("../../td/b/text()").getall()[1:]))
+        
+    # to calculate the ∆LEVER for f score
+    def extract_quarterly_long_term_debt(self, response):
+        q_long_term_debt_selectors = response.xpath("//*[contains(text(), 'Long Term Debt')]")
+        if not q_long_term_debt_selectors:
+            print(f'symbol: {self.symbol} missing Total Assets')
+            return
+        return list(map(self.convert_str_to_number, q_long_term_debt_selectors[1].xpath("../td/text()").getall()[1:]))
+
+
+    # to calculate the ∆LIQUID for f score
+    def extract_quarterly_current_assets(self, response):
+        q_current_assets_selectors = response.xpath("//*[contains(text(), 'Total Current Assets')]")
+        if not q_current_assets_selectors:
+            print(f'symbol: {self.symbol} missing Total Current Assets')
+            return
+        return list(map(self.convert_str_to_number, q_current_assets_selectors[0].xpath("../../td/b/text()").getall()[1:]))
+        
+    # to calculate the ∆LIQUID for f score
+    def extract_quarterly_current_liabilities(self, response):
+        q_current_liabilities_selectors = response.xpath("//*[contains(text(), 'Total Current Liabilities')]")
+        if not q_current_liabilities_selectors:
+            print(f'symbol: {self.symbol} missing Total Current Liabilities')
+            return
+        return list(map(self.convert_str_to_number, q_current_liabilities_selectors[0].xpath("../../td/b/text()").getall()[1:]))
+        
+    # to calculate the ∆MARGIN for f score
+    def extract_quarterly_gross_profit(self, response):
+        q_gross_profit_selectors = response.xpath("//*[contains(text(), 'Gross Profit')]")
+        if not q_gross_profit_selectors:
+            print(f'symbol: {self.symbol} missing Gross Profit')
+            return
+        return list(map(self.convert_str_to_number, q_gross_profit_selectors[1].xpath("../../td/b/text()").getall()[1:]))
+        
+    # to calculate the ∆MARGIN for f score
+    def extract_quarterly_total_revenue(self, response):
+        q_total_revenue_selectors = response.xpath("//*[contains(text(), 'Total Revenue')]")
+        if not q_total_revenue_selectors:
+            print(f'symbol: {self.symbol} missing Total Revenue')
+            return
+        return list(map(self.convert_str_to_number, q_total_revenue_selectors[0].xpath("../../td/b/text()").getall()[1:]))
+        
 
     def parse(self, response):
         try:
@@ -222,6 +290,7 @@ class ProfilesSpider(scrapy.Spider):
          #   fundamentals['earnings_ttm'] = self.extract_earnings_ttm(response)
          #   fundamentals['earnings_mrq'] = self.extract_earnings_mrq(response)
 
+            # for g score
             fundamentals['return_on_asset'] = self.extract_return_on_asset(response)
             fundamentals['industry'] = self.extract_industry(response)
             fundamentals['operational_cash_flow'] = self.extract_operational_cash_flow(response)
@@ -232,6 +301,15 @@ class ProfilesSpider(scrapy.Spider):
             fundamentals['revenue_growth'], fundamentals['revenue_growth_industry'] = self.extract_revenue_growth(response)
             fundamentals['capital_expenditure'] = self.extract_capital_expenditure(response) 
             fundamentals['rnd_expenditure'] = self.extract_rnd_expenditure(response)
+            
+            # for f score
+            fundamentals['quarterly_net_income'] = self.extract_quarterly_net_income(response)
+            fundamentals['quarterly_total_assets'] = self.extract_quarterly_total_assets(response)
+            fundamentals['quarterly_long_term_debt'] = self.extract_quarterly_long_term_debt(response)
+            fundamentals['quarterly_current_assets'] = self.extract_quarterly_current_assets(response)
+            fundamentals['quarterly_current_liabilities'] = self.extract_quarterly_current_liabilities(response)
+            fundamentals['quarterly_gross_profit'] = self.extract_quarterly_gross_profit(response)
+            fundamentals['quarterly_total_revenue'] = self.extract_quarterly_total_revenue(response)
             yield fundamentals
         except Exception as err:
             print('err', err)

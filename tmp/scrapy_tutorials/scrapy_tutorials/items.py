@@ -27,6 +27,17 @@ class Fundamentals(Item):
     revenue_growth_industry = Field()
     capital_expenditure = Field()
     rnd_expenditure = Field()
+    quarterly_net_income = Field()
+    quarterly_total_assets = Field()
+    delta_roa = Field()
+    quarterly_long_term_debt = Field()
+    delta_leverage = Field()
+    quarterly_current_assets = Field()
+    quarterly_current_liabilities = Field()
+    delta_liquid = Field()
+    quarterly_gross_profit = Field()
+    quarterly_total_revenue = Field()
+    delta_margin = Field()
 
     
 
