@@ -1,5 +1,7 @@
+from numpy.core.fromnumeric import trace
 import scrapy
 import re
+import traceback
 from os import walk
 from string import ascii_lowercase
 from scrapy_tutorials.items import Fundamentals
@@ -13,7 +15,6 @@ class ProfilesSpider(scrapy.Spider):
             mypath = self.path_prefix + alphabet
             for dirpath, dirnames, filenames in walk(mypath):
                 for filename in filenames:
-                    print(f'file://{mypath}/{filename}')
                     yield scrapy.Request(url=f'file://{mypath}/{filename}')
         # yield scrapy.Request(url='file:///E:/UCI/Winter 2021/Keystone Project/Stock Data/2006-10/2006/10/profiles/Yahoo/US/01/p/g/GOOG.html')
         # yield scrapy.Request(url='file:///home/vbharot/vnt_rog/p/A/AWK.html')
@@ -26,6 +27,9 @@ class ProfilesSpider(scrapy.Spider):
         # yield scrapy.Request(url='file:///mnt/c/stocks_data/2006/10/profiles/Yahoo/US/01/p/j/JNJ.html')
         # yield scrapy.Request(url='file:///mnt/c/stocks_data/2006/10/profiles/Yahoo/US/01/p/I/IBM.html')
 
+        # yield scrapy.Request(url='file:///mnt/c/stocks_data/2006/10/profiles/Yahoo/US/01/p/w/WW.html')
+        # yield scrapy.Request(url='file:///mnt/c/stocks_data/2006/10/profiles/Yahoo/US/01/p/a/AAAE.OB.html')
+        
 
     def get_symbol(self, response):
         """
@@ -50,7 +54,7 @@ class ProfilesSpider(scrapy.Spider):
             else:
                 return float(num)
         except Exception as err:
-            print(f'err: convert_str_to_number: {num}', err)
+            # print(f'err: convert_str_to_number: {num}', err)
             return
 
     def extract_value_from_key_sibling(self, key_selector):
@@ -61,18 +65,19 @@ class ProfilesSpider(scrapy.Spider):
             #return sign*self.convert_str_to_number(value)
             return self.convert_str_to_number(value)
         except Exception as err:
-            print('sibling extraction err', err)
+            # print('sibling extraction err', err)
+            return
 
     def extract_value_from_key_sibling_2(self, key_selector):
         try:
             #sign = -1 if key_selector.xpath("./following-sibling::td/text()").get() == '-' else 1
             value = key_selector.xpath("./following-sibling::td:nth-child(5)/text()").get()
-            print("My value", value)
             if not value: return
             #return sign*self.convert_str_to_number(value)
             return self.convert_str_to_number(value)
         except Exception as err:
-            print('sibling extraction err', err)
+            # print('sibling extraction err', err)
+            return
 
     def extract_low_price(self, response):
         """
@@ -80,7 +85,7 @@ class ProfilesSpider(scrapy.Spider):
         """
         low_price_selectors = response.xpath("//*[contains(text(), '52-Week Low')]")
         if not low_price_selectors:
-            print(f'symbol: {self.symbol} missing 52-Week Low')
+            # print(f'symbol: {self.symbol} missing 52-Week Low')
             return
         return self.extract_value_from_key_sibling(low_price_selectors[0])
 
@@ -90,21 +95,21 @@ class ProfilesSpider(scrapy.Spider):
         """
         high_price_selectors = response.xpath("//*[contains(text(), '52-Week High')]")
         if not high_price_selectors:
-            print(f'symbol: {self.symbol} missing 52-Week High')
+            # print(f'symbol: {self.symbol} missing 52-Week High')
             return
         return self.extract_value_from_key_sibling(high_price_selectors[0])
 
     def extract_book_value_mrq(self, response):
         book_value_mrq_selectors = response.xpath("//*[contains(text(), 'Book Value')]")
         if not book_value_mrq_selectors:
-            print(f'symbol: {self.symbol} missing Book Value (mrq)')
+            # print(f'symbol: {self.symbol} missing Book Value (mrq)')
             return
         return self.extract_value_from_key_sibling(book_value_mrq_selectors[0])
 
     def extract_earnings_ttm(self, response):
         earnings_ttm_selectors = response.xpath("//*[contains(text(), 'Earnings')]/*[contains(text(), '(ttm)')]/..")
         if not earnings_ttm_selectors:
-            print(f'symbol: {self.symbol} missing Earnings (ttm)')
+            # print(f'symbol: {self.symbol} missing Earnings (ttm)')
             return
 
         return self.extract_value_from_key_sibling(earnings_ttm_selectors[0])
@@ -112,7 +117,7 @@ class ProfilesSpider(scrapy.Spider):
     def extract_earnings_mrq(self, response):
         earnings_mrq_selectors = response.xpath("//*[contains(text(), 'EPS Est')]")
         if not earnings_mrq_selectors:
-            print(f'symbol: {self.symbol} missing Earnings (mrq)')
+            # print(f'symbol: {self.symbol} missing Earnings (mrq)')
             return
 
         return self.extract_value_from_key_sibling_2(earnings_mrq_selectors[0])
@@ -121,7 +126,7 @@ class ProfilesSpider(scrapy.Spider):
     def extract_daily_volume(self, response):
         daily_volume_selectors = response.xpath("//*[contains(text(), 'Average Volume')]")
         if not daily_volume_selectors:
-            print(f'symbol: {self.symbol} missing Daily Volume (3-month avg)')
+            # print(f'symbol: {self.symbol} missing Daily Volume (3-month avg)')
             return
         return self.extract_value_from_key_sibling(daily_volume_selectors[0])
 
@@ -129,50 +134,51 @@ class ProfilesSpider(scrapy.Spider):
     def extract_shares_outstanding(self, response):
         shares_outstanding_selectors = response.xpath("//*[contains(text(), 'Shares Outstanding')]")
         if not shares_outstanding_selectors:
-            print(f'symbol: {self.symbol} missing Shares Outstanding')
+            # print(f'symbol: {self.symbol} missing Shares Outstanding')
             return
         return self.extract_value_from_key_sibling(shares_outstanding_selectors[0])
 
     def extract_return_on_asset(self, response):
         return_on_assets_selectors = response.xpath("//*[contains(text(), 'Return on Assets (ttm)')]")
         if not return_on_assets_selectors:
-            print(f'symbol: {self.symbol} missing return on asset')
+            # print(f'symbol: {self.symbol} missing return on asset')
             return
         return self.extract_value_from_key_sibling(return_on_assets_selectors)
 
     def extract_industry(self, response):
         industry_selectors = response.xpath("//*[contains(text(), 'Industry:')]")
         if not industry_selectors:
-            print(f'symbol: {self.symbol} missing Industry:')
+            # print(f'symbol: {self.symbol} missing Industry:')
             return
         return industry_selectors.xpath("../td[2]/a/text()").get()
 
     def extract_operational_cash_flow(self, response):
         operational_cash_flow_selectors = response.xpath("//*[contains(text(), 'Operating Cash Flow (ttm):')]")
         if not operational_cash_flow_selectors:
-            print(f'symbol: {self.symbol} missing Operating Cash Flow (ttm):')
+            # print(f'symbol: {self.symbol} missing Operating Cash Flow (ttm):')
             return
         return self.extract_value_from_key_sibling(operational_cash_flow_selectors)
 
-    # TODO: calculate from the sum of all columns.
     def extract_total_assets(self, response):
         total_assets_selectors = response.xpath("//*[contains(text(), 'Total Assets')]/..")
         if not total_assets_selectors:
-            print(f'symbol: {self.symbol} missing Total Assets')
+            # print(f'symbol: {self.symbol} missing Total Assets')
             return
-        return self.convert_str_to_number(total_assets_selectors.xpath("../td[2]/b/text()").get())
+        # these each quaterly value need to be sum verify the Revenue (ttm) and sum of Total Revenue
+        values = map(self.convert_str_to_number, total_assets_selectors.xpath("../td/b/text()").getall()[1:])
+        return sum(each*1000 for each in values if each is not None)
 
     def extract_net_income(self, response):
         net_income_selectors = response.xpath("//*[contains(text(), 'Net Income (ttm):')]")
         if not net_income_selectors:
-            print(f'symbol: {self.symbol} missing Net Income (ttm):')
+            # print(f'symbol: {self.symbol} missing Net Income (ttm):')
             return
         return self.extract_value_from_key_sibling(net_income_selectors)
         
     def extract_earnings_growth(self, response):
         earnings_growth_selectors = response.xpath("//*[contains(text(), 'Qtrly Earnings Growth (yoy):')]")
         if not earnings_growth_selectors:
-            print(f'symbol: {self.symbol} missing Qtrly Earnings Growth (yoy):')
+            # print(f'symbol: {self.symbol} missing Qtrly Earnings Growth (yoy):')
             return
         return self.extract_value_from_key_sibling(earnings_growth_selectors)
             
@@ -180,98 +186,107 @@ class ProfilesSpider(scrapy.Spider):
     def extract_sales_growth(self, response):
         sales_growth_selectors = response.xpath("//*[contains(text(), 'Sales Growth (year/est)')]")
         if not sales_growth_selectors:
-            print(f'symbol: {self.symbol} missing Sales Growth (year/est)')
+            # print(f'symbol: {self.symbol} missing Sales Growth (year/est)')
             return
         return self.extract_value_from_key_sibling(sales_growth_selectors)
 
     def extract_revenue_growth(self, response):
         revenue_growth_selectors = response.xpath("//*[contains(text(), 'Qtrly Rev Growth (yoy):')]")
         if not revenue_growth_selectors:
-            print(f'symbol: {self.symbol} missing Qtrly Rev Growth (yoy):')
+            # print(f'symbol: {self.symbol} missing Qtrly Rev Growth (yoy):')
             return (None, None)
         return self.extract_growth_value_from_siblings(revenue_growth_selectors)
 
-    # TODO: calculate from the sum of all columns.
     def extract_capital_expenditure(self, response):
         capital_expenditure_selectors = response.xpath("//*[contains(text(), 'Capital Expenditures')]")
         if not capital_expenditure_selectors:
-            print(f'symbol: {self.symbol} missing Capital Expenditures')
+            # print(f'symbol: {self.symbol} missing Capital Expenditures')
             return
-        return self.extract_value_from_key_sibling(capital_expenditure_selectors)
+        values = map(self.convert_str_to_number, capital_expenditure_selectors.xpath('../td/text()').getall()[1:])
+        return sum(each*1000 for each in values if each is not None)
 
-    # TODO: calculate from the sum of all columns.
+
     def extract_rnd_expenditure(self, response):
         rnd_expenditure_selectors = response.xpath("//*[contains(text(), 'Research Development')]")
         if not rnd_expenditure_selectors:
-            print(f'symbol: {self.symbol} missing Research Development')
-            return    # to calculate the ∆ROA for f score
+            # print(f'symbol: {self.symbol} missing Research Development')
+            return
+        values = map(self.convert_str_to_number, rnd_expenditure_selectors.xpath('../td/text()').getall()[1:])
+        return sum(each*1000 for each in values if each is not None)
+
+    # to calculate the ∆ROA for f score
     def extract_quarterly_total_assets(self, response):
         q_total_assets_selectors = response.xpath("//*[contains(text(), 'Total Assets')]")
         if not q_total_assets_selectors:
-            print(f'symbol: {self.symbol} missing Total Assets')
+            # print(f'symbol: {self.symbol} missing Total Assets')
             return
-        return list(map(self.convert_str_to_number, q_total_assets_selectors[0].xpath("../../td/b/text()").getall()[1:]))
-        
-        return self.extract_value_from_key_sibling(rnd_expenditure_selectors)
+        values = map(self.convert_str_to_number, q_total_assets_selectors[0].xpath("../../td/b/text()").getall()[1:])
+        return list(each*1000 if each is not None else None for each in values)
 
 
     # to calculate the ∆ROA for f score
     def extract_quarterly_net_income(self, response):
         q_net_income_selectors = response.xpath("//*[contains(text(), 'Net Income Applicable To Common Shares')]")
         if not q_net_income_selectors:
-            print(f'symbol: {self.symbol} missing Net Income Applicable To Common Shares')
+            # print(f'symbol: {self.symbol} missing Net Income Applicable To Common Shares')
             return
-        return list(map(self.convert_str_to_number, q_net_income_selectors[0].xpath("../../td/b/text()").getall()[1:]))
+        values = map(self.convert_str_to_number, q_net_income_selectors[0].xpath("../../td/b/text()").getall()[1:])
+        return list(each*1000 if each is not None else None for each in values)
 
     # to calculate the ∆ROA for f score
     def extract_quarterly_total_assets(self, response):
         q_total_assets_selectors = response.xpath("//*[contains(text(), 'Total Assets')]")
         if not q_total_assets_selectors:
-            print(f'symbol: {self.symbol} missing Total Assets')
+            # print(f'symbol: {self.symbol} missing Total Assets')
             return
-        return list(map(self.convert_str_to_number, q_total_assets_selectors[0].xpath("../../td/b/text()").getall()[1:]))
-        
+        values = map(self.convert_str_to_number, q_total_assets_selectors[0].xpath("../../td/b/text()").getall()[1:])
+        return list(each*1000 if each is not None else None for each in values)
+
     # to calculate the ∆LEVER for f score
     def extract_quarterly_long_term_debt(self, response):
         q_long_term_debt_selectors = response.xpath("//*[contains(text(), 'Long Term Debt')]")
-        if not q_long_term_debt_selectors:
-            print(f'symbol: {self.symbol} missing Total Assets')
+        if len(q_long_term_debt_selectors) < 2:
+            # print(f'symbol: {self.symbol} missing Total Assets')
             return
-        return list(map(self.convert_str_to_number, q_long_term_debt_selectors[1].xpath("../td/text()").getall()[1:]))
+        values = map(self.convert_str_to_number, q_long_term_debt_selectors[1].xpath("../td/text()").getall()[1:])
+        return list(each*1000 if each is not None else None for each in values)
 
 
     # to calculate the ∆LIQUID for f score
     def extract_quarterly_current_assets(self, response):
         q_current_assets_selectors = response.xpath("//*[contains(text(), 'Total Current Assets')]")
         if not q_current_assets_selectors:
-            print(f'symbol: {self.symbol} missing Total Current Assets')
+            # print(f'symbol: {self.symbol} missing Total Current Assets')
             return
-        return list(map(self.convert_str_to_number, q_current_assets_selectors[0].xpath("../../td/b/text()").getall()[1:]))
+        values = map(self.convert_str_to_number, q_current_assets_selectors[0].xpath("../../td/b/text()").getall()[1:])
+        return list(each*1000 if each is not None else None for each in values)
         
     # to calculate the ∆LIQUID for f score
     def extract_quarterly_current_liabilities(self, response):
         q_current_liabilities_selectors = response.xpath("//*[contains(text(), 'Total Current Liabilities')]")
         if not q_current_liabilities_selectors:
-            print(f'symbol: {self.symbol} missing Total Current Liabilities')
+            # print(f'symbol: {self.symbol} missing Total Current Liabilities')
             return
-        return list(map(self.convert_str_to_number, q_current_liabilities_selectors[0].xpath("../../td/b/text()").getall()[1:]))
+        values = map(self.convert_str_to_number, q_current_liabilities_selectors[0].xpath("../../td/b/text()").getall()[1:])
+        return list(each*1000 if each is not None else None for each in values)
         
     # to calculate the ∆MARGIN for f score
     def extract_quarterly_gross_profit(self, response):
         q_gross_profit_selectors = response.xpath("//*[contains(text(), 'Gross Profit')]")
-        if not q_gross_profit_selectors:
-            print(f'symbol: {self.symbol} missing Gross Profit')
+        if len(q_gross_profit_selectors) < 2:
+            # print(f'symbol: {self.symbol} missing Gross Profit')
             return
-        return list(map(self.convert_str_to_number, q_gross_profit_selectors[1].xpath("../../td/b/text()").getall()[1:]))
+        values = map(self.convert_str_to_number, q_gross_profit_selectors[1].xpath("../../td/b/text()").getall()[1:])
+        return list(each*1000 if each is not None else None for each in values)
         
     # to calculate the ∆MARGIN for f score
     def extract_quarterly_total_revenue(self, response):
         q_total_revenue_selectors = response.xpath("//*[contains(text(), 'Total Revenue')]")
         if not q_total_revenue_selectors:
-            print(f'symbol: {self.symbol} missing Total Revenue')
+            # print(f'symbol: {self.symbol} missing Total Revenue')
             return
-        return list(map(self.convert_str_to_number, q_total_revenue_selectors[0].xpath("../../td/b/text()").getall()[1:]))
-        
+        values = map(self.convert_str_to_number, q_total_revenue_selectors[0].xpath("../../td/b/text()").getall()[1:])
+        return list(each*1000 if each is not None else None for each in values)
 
     def parse(self, response):
         try:
@@ -312,6 +327,7 @@ class ProfilesSpider(scrapy.Spider):
             fundamentals['quarterly_total_revenue'] = self.extract_quarterly_total_revenue(response)
             yield fundamentals
         except Exception as err:
-            print('err', err)
+            traceback.print_exc()
+            print(f'ERROR omission for {self.symbol}', err)
 
 # run: scrapy crawl profiles --nolog

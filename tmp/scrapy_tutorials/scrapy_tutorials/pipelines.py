@@ -12,7 +12,7 @@ class FundamentalsPipeline(object):
 
     def get_cash_roa(self, operational_cash_flow, total_assets):
         if not operational_cash_flow or not total_assets: return
-        return operational_cash_flow/total_assets
+        return operational_cash_flow/total_assets*100
 
     def get_delta_ratio(self, a, b, sign=1):
         deltas = 0
