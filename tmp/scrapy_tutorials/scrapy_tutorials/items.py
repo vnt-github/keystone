@@ -38,6 +38,9 @@ class Fundamentals(Item):
     quarterly_gross_profit = Field()
     quarterly_total_revenue = Field()
     delta_margin = Field()
+    ebitda = Field()
+    enterprise_value = Field()
+    magic_score = Field()
 
     
 
