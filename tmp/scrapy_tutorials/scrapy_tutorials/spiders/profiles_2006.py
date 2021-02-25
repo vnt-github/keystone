@@ -9,14 +9,14 @@ from scrapy_tutorials.items import Fundamentals
 class ProfilesSpider(scrapy.Spider):
     name = "profiles_2006"
     #Change it before running.
-    path_prefix = '/mnt/c/stocks_data/2006/10/profiles/Yahoo/US/01/p/'
+    path_prefix = 'E:/UCI/Winter 2021/Keystone Project/Stock Data/2006-10/2006/10/profiles/Yahoo/US/01/p/'
     def start_requests(self):
         for alphabet in ascii_lowercase:
             mypath = self.path_prefix + alphabet
             for dirpath, dirnames, filenames in walk(mypath):
                 for filename in filenames:
                     yield scrapy.Request(url=f'file://{mypath}/{filename}')
-        # yield scrapy.Request(url='file:///E:/UCI/Winter 2021/Keystone Project/Stock Data/2006-10/2006/10/profiles/Yahoo/US/01/p/g/GOOG.html')
+        #yield scrapy.Request(url='file:///E:/UCI/Winter 2021/Keystone Project/Stock Data/2006-10/2006/10/profiles/Yahoo/US/01/p/g/GOOG.html')
         # yield scrapy.Request(url='file:///home/vbharot/vnt_rog/p/A/AWK.html')
         # yield scrapy.Request(url='file:///home/vbharot/vnt_rog/p/A/AXSI.html')
         # yield scrapy.Request(url='file:///home/vbharot/vnt_rog/p/A/AWF.html')
@@ -214,6 +214,20 @@ class ProfilesSpider(scrapy.Spider):
         values = map(self.convert_str_to_number, rnd_expenditure_selectors.xpath('../td/text()').getall()[1:])
         return sum(each*1000 for each in values if each is not None)
 
+    def extract_ebitda(self, response):
+        q_ebitda_selectors = response.xpath("//*[contains(text(), 'EBITDA (ttm):')]")
+        if not q_ebitda_selectors:
+            # print(f'symbol: {self.symbol} missing Total Assets')
+            return
+        return self.extract_value_from_key_sibling(q_ebitda_selectors[0])
+
+    def extract_enterprise_value(self, response):
+        q_enterprise_selectors = response.xpath("//*[contains(text(), 'Enterprise Value ')]")
+        if not q_enterprise_selectors:
+            # print(f'symbol: {self.symbol} missing Total Assets')
+            return
+        return self.extract_value_from_key_sibling(q_enterprise_selectors[0])
+
     # to calculate the ∆ROA for f score
     def extract_quarterly_total_assets(self, response):
         q_total_assets_selectors = response.xpath("//*[contains(text(), 'Total Assets')]")
@@ -304,6 +318,10 @@ class ProfilesSpider(scrapy.Spider):
             # TODO: how to normalize book value
          #   fundamentals['earnings_ttm'] = self.extract_earnings_ttm(response)
          #   fundamentals['earnings_mrq'] = self.extract_earnings_mrq(response)
+         
+            #for magic
+            fundamentals['ebitda'] = self.extract_ebitda(response)
+            fundamentals['enterprise_value'] = self.extract_enterprise_value(response)
 
             # for g score
             fundamentals['return_on_asset'] = self.extract_return_on_asset(response)
