@@ -49,6 +49,9 @@ class FundamentalsPipeline(object):
         item['delta_leverage'] = self.get_delta_leverage(item['quarterly_long_term_debt'], item['quarterly_total_assets'])
         item['delta_liquid'] = self.get_delta_liquid(item['quarterly_current_assets'], item['quarterly_current_liabilities'])
         item['delta_margin'] = self.get_delta_margin(item['quarterly_gross_profit'], item['quarterly_total_revenue'])
+        if((item['ebitda'] != None) and (item['enterprise_value'] != None)):
+            item['magic_score'] = item['ebitda']/ item['enterprise_value'] 
+                    
 
         
         return item
