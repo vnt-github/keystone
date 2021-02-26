@@ -1,0 +1,2 @@
+01 15:30 buy 100 shares of IBM
+01 15:30 buy 100 shares of JNJ

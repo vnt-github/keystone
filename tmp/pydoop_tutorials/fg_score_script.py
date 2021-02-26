@@ -8,7 +8,7 @@ import pydoop.hdfs as hdfs
 
 industries = defaultdict(dict)
 
-with hdfs.open('/keystone/output_industries_2006_5/part-r-00000', 'rt') as f:
+with hdfs.open('/pydoop_out/fg_industry/part-r-00000', 'rt') as f:
     line = f.readline()
     while line:
         industry, count, median_return_on_asset, median_cash_roa, median_operational_cash_flow, median_net_income, median_earnings_growth, median_sales_growth, median_capital_expenditure, median_rnd_expenditure = line.split("\t")
@@ -56,9 +56,11 @@ def mapper(_, text, writer):
     data = json.loads(text)
     f_score = get_F_score(data)
     g_score = get_G_score(data)
-    writer.emit(f"{f_score+g_score:0>2}_{data['symbol']: <10}", f"{f_score}_{g_score}_{data['symbol']}")
+    max = 15
+    value = f"{max-(f_score+g_score+data['magic_score']):.3f}"
+    writer.emit(f"{value:0<7}", f"{f_score}_{g_score}_{data['magic_score']}_{data['symbol']}")
 
 def reducer(keys, values, writer):
     fg_score = keys.split("_")[0]
-    f_score, g_score, symbol = next(values).split('_')
-    writer.emit(symbol, f"{fg_score} {f_score} {g_score}")
+    f_score, g_score, magic_score, symbol = next(values).split('_')
+    writer.emit(symbol, f"{fg_score}\t{f_score}\t{g_score}\t{magic_score}")
