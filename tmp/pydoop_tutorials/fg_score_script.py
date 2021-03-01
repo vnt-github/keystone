@@ -56,8 +56,9 @@ def mapper(_, text, writer):
     data = json.loads(text)
     f_score = get_F_score(data)
     g_score = get_G_score(data)
-    max = 15
-    value = f"{max-(f_score+g_score+data['magic_score']):.3f}"
+    max_value = 15
+    magic_score = data["magic_score"] if -1 <  data["magic_score"] < 1 else 0 
+    value = f"{max_value-(f_score+g_score+magic_score):.3f}"
     writer.emit(f"{value:0>7}_{data['symbol']: <10}", f"{f_score}_{g_score}_{data['magic_score']}_{data['symbol']}")
 
 def reducer(keys, values, writer):
