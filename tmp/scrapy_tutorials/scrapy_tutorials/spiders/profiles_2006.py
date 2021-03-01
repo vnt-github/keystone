@@ -215,18 +215,18 @@ class ProfilesSpider(scrapy.Spider):
         return sum(each*1000 for each in values if each is not None)
 
     def extract_ebitda(self, response):
-        q_ebitda_selectors = response.xpath("//*[contains(text(), 'EBITDA (ttm):')]")
-        if not q_ebitda_selectors:
-            # print(f'symbol: {self.symbol} missing Total Assets')
+        ebitda_selectors = response.xpath("//*[contains(text(), 'EBITDA (ttm):')]")
+        if not ebitda_selectors:
+            # print(f'symbol: {self.symbol} missing EBITDA (ttm):')
             return
-        return self.extract_value_from_key_sibling(q_ebitda_selectors[0])
+        return self.extract_value_from_key_sibling(ebitda_selectors[0])
 
     def extract_enterprise_value(self, response):
-        q_enterprise_selectors = response.xpath("//*[contains(text(), 'Enterprise Value ')]")
-        if not q_enterprise_selectors:
-            # print(f'symbol: {self.symbol} missing Total Assets')
+        enterprise_selectors = response.xpath("//*[contains(text(), 'Enterprise Value')]")
+        if not enterprise_selectors:
+            # print(f'symbol: {self.symbol} missing Enterprise Value')
             return
-        return self.extract_value_from_key_sibling(q_enterprise_selectors[0])
+        return self.extract_value_from_key_sibling(enterprise_selectors[0])
 
     # to calculate the ∆ROA for f score
     def extract_quarterly_total_assets(self, response):

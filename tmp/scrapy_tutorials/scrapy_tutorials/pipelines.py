@@ -40,6 +40,10 @@ class FundamentalsPipeline(object):
     def get_delta_margin(self, quarterly_gross_profit, quarterly_total_revenue):
         return self.get_delta_ratio(quarterly_gross_profit, quarterly_total_revenue)
 
+    def get_magic_score(self, ebitda, enterprise_value):
+        if not ebitda or not enterprise_value: return 0
+        return ebitda/enterprise_value
+
     def process_item(self, item, spider):
         item['price'] = self.normal_distribution(item['high_price'], item['low_price'])
         # item['earnings_ttm_per_price'] = self.normalize_by_price(item['earnings_ttm'], item['price'])
@@ -49,9 +53,5 @@ class FundamentalsPipeline(object):
         item['delta_leverage'] = self.get_delta_leverage(item['quarterly_long_term_debt'], item['quarterly_total_assets'])
         item['delta_liquid'] = self.get_delta_liquid(item['quarterly_current_assets'], item['quarterly_current_liabilities'])
         item['delta_margin'] = self.get_delta_margin(item['quarterly_gross_profit'], item['quarterly_total_revenue'])
-        if((item['ebitda'] != None) and (item['enterprise_value'] != None)):
-            item['magic_score'] = item['ebitda']/ item['enterprise_value'] 
-                    
-
-        
+        item['magic_score'] = self.get_magic_score(item['ebitda'], item['enterprise_value'])
         return item

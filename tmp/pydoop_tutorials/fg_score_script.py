@@ -58,7 +58,7 @@ def mapper(_, text, writer):
     g_score = get_G_score(data)
     max = 15
     value = f"{max-(f_score+g_score+data['magic_score']):.3f}"
-    writer.emit(f"{value:0<7}", f"{f_score}_{g_score}_{data['magic_score']}_{data['symbol']}")
+    writer.emit(f"{value:0>7}_{data['symbol']: <10}", f"{f_score}_{g_score}_{data['magic_score']}_{data['symbol']}")
 
 def reducer(keys, values, writer):
     fg_score = keys.split("_")[0]
