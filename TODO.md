@@ -55,3 +55,44 @@
 
 
 - include investors average.
+- stratergy:
+    - volume base
+    - ml closes
+    - fundamentals
+    - combines results from these.
+
+- fundamentals info.
+- will the test data be in different html structures format.
+    - 2001, 2006, 2011, 2016, all have diff html format.
+    - 2016 data is very very different.
+
+
+
+- Cash volume: in order to use the bid/ask price that's observed in my files,  good rule of thumb is to limit the number of shares you want to buy/sell to no more than about 0.1% of the daily volume. So if you have $100,000 total to spend and you're going to buy 10 companies, you're buying $10k worth for each company; you should restrict your purchases to companies that have a daily cash volume of $1,000,000 or more
+- use relative to benchmakrs.
+
+- F score: https://en.wikipedia.org/wiki/Piotroski_F-score
+- G score: https://papers.ssrn.com/sol3/papers.cfm?abstract_id=403180
+
+- LSTM for tactical data
+
+- how to save the data.
+    - hadoop as it's for large data.
+
+- what to do with missing data when evaluating not saving?
+    - why it is missing?
+    - how it will impact our outcomes?
+    - https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3668100/
+    - MCAR, MAR, MNAR
+    - regression(preferred)/multiple imputation, even if its possible because other variables may or may not be enough.
+    - pair wise deletion with whatever strategy we use.
+    - Mean substitution, Pairwise deletion, listwise deletion, Maximum likelihood estimation (MLE).
+    - compeletly missing then remove.
+
+
+chmod +x run.sh
+
+sshfs -o IdentityFile=~/.ssh/vnt_openlab_uci allow_other,default_permissions,idmap=user vbharot@openlab.ics.uci.edu:/home/vbharot/stocks /mnt/e/vnt/UCI/stocks
+
+
+sshfs -o IdentityFile=~/.ssh/vnt_openlab_uci allow_other,default_permissions,idmap=user vbharot@openlab.ics.uci.edu:/home/vbharot/stocks ./test_mnt

@@ -4,7 +4,7 @@ from json import dumps
 
 class PydoopPipeline(object):
     def open_spider(self, spider):
-        self.output_dir = "/scrapy_out"
+        self.output_dir = spider.tmp_dir
         self.output_file = f"fg_{spider.html_format}.jsonlines"
         hdfs.mkdir(f"{self.output_dir}")
         self.f = hdfs.open(f"{self.output_dir}/{self.output_file}", "wt")
