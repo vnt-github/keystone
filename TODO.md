@@ -96,3 +96,7 @@ sshfs -o IdentityFile=~/.ssh/vnt_openlab_uci allow_other,default_permissions,idm
 
 
 sshfs -o IdentityFile=~/.ssh/vnt_openlab_uci allow_other,default_permissions,idmap=user vbharot@openlab.ics.uci.edu:/home/vbharot/stocks ./test_mnt
+
+
+./run.sh 2006 ~/tmp_dir
+adversary 2006/11 /home/vbharot/keystone/tmp/final_results/2006-trades.txt
