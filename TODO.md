@@ -100,3 +100,11 @@ sshfs -o IdentityFile=~/.ssh/vnt_openlab_uci allow_other,default_permissions,idm
 
 ./run.sh 2006 ~/tmp_dir
 adversary 2006/11 /home/vbharot/keystone/tmp/final_results/2006-trades.txt
+
+
+
+source ~/keystone/venvs/tutorials/bin/activate
+cd ~/stocks/2006/10
+<!-- ~/keystone/run.sh 2006 ~/tmp_dir -->
+~/keystone/run.sh 2006 ~/tmp_dir | adversary 2006/11
+adversary 2006/11 /home/vbharot/keystone/tmp/final_results/2006-trades.txt

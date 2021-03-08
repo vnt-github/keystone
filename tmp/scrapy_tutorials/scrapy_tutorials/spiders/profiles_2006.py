@@ -8,28 +8,18 @@ from scrapy_tutorials.items import Fundamentals
 
 class ProfilesSpider(scrapy.Spider):
     name = "profiles_2006"
-    #Change it before running.
-    path_prefix = 'E:/UCI/Winter 2021/Keystone Project/Stock Data/2006-10/2006/10/profiles/Yahoo/US/01/p/'
     def start_requests(self):
+        path_prefix = self.stocks_data_dir
         for alphabet in ascii_lowercase:
-            mypath = self.path_prefix + alphabet
+            counter = 2
+            mypath = path_prefix + '/profiles/Yahoo/US/01/p/' + alphabet
             for dirpath, dirnames, filenames in walk(mypath):
                 for filename in filenames:
+                    if filename.count('.') > 1 or len(filename.split('.')[0]) < 3: continue
+                    counter -= 1
+                    if not counter:
+                        break
                     yield scrapy.Request(url=f'file://{mypath}/{filename}')
-        #yield scrapy.Request(url='file:///E:/UCI/Winter 2021/Keystone Project/Stock Data/2006-10/2006/10/profiles/Yahoo/US/01/p/g/GOOG.html')
-        # yield scrapy.Request(url='file:///home/vbharot/vnt_rog/p/A/AWK.html')
-        # yield scrapy.Request(url='file:///home/vbharot/vnt_rog/p/A/AXSI.html')
-        # yield scrapy.Request(url='file:///home/vbharot/vnt_rog/p/A/AWF.html')
-        # yield scrapy.Request(url='file:///home/vbharot/vnt_rog/p/A/AXA.html')
-
-        # yield scrapy.Request(url='file:///mnt/c/stocks_data/2006/10/profiles/Yahoo/US/01/p/A/AWF.html')
-        # yield scrapy.Request(url='file:///mnt/c/stocks_data/2006/10/profiles/Yahoo/US/01/p/A/AXA.html')
-        # yield scrapy.Request(url='file:///mnt/c/stocks_data/2006/10/profiles/Yahoo/US/01/p/j/JNJ.html')
-        # yield scrapy.Request(url='file:///mnt/c/stocks_data/2006/10/profiles/Yahoo/US/01/p/I/IBM.html')
-
-        # yield scrapy.Request(url='file:///mnt/c/stocks_data/2006/10/profiles/Yahoo/US/01/p/w/WW.html')
-        # yield scrapy.Request(url='file:///mnt/c/stocks_data/2006/10/profiles/Yahoo/US/01/p/a/AAAE.OB.html')
-        
 
     def get_symbol(self, response):
         """

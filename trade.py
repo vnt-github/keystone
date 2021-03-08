@@ -24,10 +24,15 @@ def get_F_score(data):
     f8 = data['delta_margin']
     return f1 + f2 + f3 + f4 + f5 + f6 + f8
 
+# TODO: get correct volume, remove hardcoded 150 shares
+# TODO: get correct price for the volume selected
+# TODO: get the first and last day of the month
+# TODO: industy s&p 500
 def pick_best(stocks_data):
     volume = 150
     count = 20
     trades = []
+    time = "15:30"
     for stock_data in stocks_data:
         if stock_data['score'] > 15 or count < 0: break
         # print(stock_data['symbol'], stock_data['score'])
@@ -35,9 +40,9 @@ def pick_best(stocks_data):
         count -= 1
 
     for volume, symbol, score in trades:
-        print(f"01 15:30 buy {volume} shares of {symbol}")
+        print(f"02 {time} buy {volume} shares of {symbol}")
     for volume, symbol, score in trades:
-        print(f"30 15:30 sell {volume} shares of {symbol}")
+        print(f"28 {time} sell {volume} shares of {symbol}")
     
 def load_stocks_data(stocks_data_path):
     data = []

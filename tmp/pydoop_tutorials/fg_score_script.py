@@ -8,7 +8,7 @@ import pydoop.hdfs as hdfs
 
 industries = defaultdict(dict)
 
-with hdfs.open('/pydoop_out/fg_industry/part-r-00000', 'rt') as f:
+with open('/home/vbharot/keystone/tmp/final_results/fg_industry.txt', 'rt') as f:
     line = f.readline()
     while line:
         industry, count, median_return_on_asset, median_cash_roa, median_operational_cash_flow, median_net_income, median_earnings_growth, median_sales_growth, median_capital_expenditure, median_rnd_expenditure = line.split("\t")
@@ -50,6 +50,36 @@ def get_F_score(data):
     f8 = data['delta_margin']
     return f1 + f2 + f3 + f4 + f5 + f6 + f8
 
+def pick_best(values):
+    volume = 150
+    count = 20
+    trades = []
+    for score, symbol in values:
+        if score > 15 or count < 0: break
+        trades.append((volume, symbol))
+        count -= 1
+
+    for volume, symbol in trades:
+        print(f"01 15:30 buy {volume} shares of {symbol}")
+    for volume, symbol in trades:
+        print(f"30 15:30 sell {volume} shares of {symbol}")
+    
+
+def log_final_res():
+    values = []
+    with open('/home/vbharot/keystone/tmp/results_fg_magic_score_2006.jsonlines', 'rt') as f:
+        line = f.readline()
+        while line:
+            data = json.loads(line)
+            f_score = get_F_score(data)
+            g_score = get_G_score(data)
+            max_value = 15
+            magic_score = data["magic_score"] if -1 <  data["magic_score"] < 1 else 0 
+            score = max_value-(f_score+g_score+magic_score)
+            values.append((score, data['symbol']))
+            line = f.readline()
+    values.sort()
+    pick_best(values)
 
 def mapper(_, text, writer):
     # for word in text.split():
@@ -65,3 +95,6 @@ def reducer(keys, values, writer):
     fg_score = keys.split("_")[0]
     f_score, g_score, magic_score, symbol = next(values).split('_')
     writer.emit(symbol, f"{fg_score}\t{f_score}\t{g_score}\t{magic_score}")
+
+if __name__ == "__main__":
+    log_final_res()
