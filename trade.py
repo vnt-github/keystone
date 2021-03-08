@@ -1,6 +1,8 @@
 import json, sys
 from collections import defaultdict
 from statistics import median
+from os import walk
+from math import floor
 
 def get_G_score(data, industries):
     industry = data['industry']
@@ -24,25 +26,41 @@ def get_F_score(data):
     f8 = data['delta_margin']
     return f1 + f2 + f3 + f4 + f5 + f6 + f8
 
-# TODO: get correct volume, remove hardcoded 150 shares
-# TODO: get correct price for the volume selected
-# TODO: get the first and last day of the month
-# TODO: industy s&p 500
-def pick_best(stocks_data):
-    volume = 150
-    count = 20
-    trades = []
-    time = "15:30"
-    for stock_data in stocks_data:
-        if stock_data['score'] > 15 or count < 0: break
-        # print(stock_data['symbol'], stock_data['score'])
-        trades.append((volume, stock_data['symbol'], stock_data['score']))
-        count -= 1
+def get_trade_days(month_path):
+    _, str_days_and_profiles, _ = next(walk(month_path))
+    str_days = sorted(day for day in str_days_and_profiles if day.isdigit())
+    return (str_days[0], str_days[1], str_days[-1])
 
-    for volume, symbol, score in trades:
-        print(f"02 {time} buy {volume} shares of {symbol}")
-    for volume, symbol, score in trades:
-        print(f"28 {time} sell {volume} shares of {symbol}")
+def get_trades(stocks_data, prev_day_close_path, count=20):
+    trades = []
+    close_data = [line.split() for line in open(prev_day_close_path).readlines()]
+    for stock_data in stocks_data:
+        if not count: break
+        prev_day_trade = next((trade for trade in close_data if trade[0] == stock_data['symbol']), None)
+        if not prev_day_trade: continue
+        symbol, time, price, change, per_change, volume, open_p, high_p, low_p, bid, ask = prev_day_trade
+        if low_p != 'N/A' and high_p != 'N/A': 
+            price = (float(low_p) + float(high_p))/2
+
+        max_vol = floor(float(volume)/100)
+        if price == 'N/A': continue
+        trade_vol = min(max_vol, floor(5000/float(price)))
+        if not trade_vol: continue
+        trades.append((trade_vol, symbol))
+        count -= 1
+    return trades
+
+
+# TODO: industy s&p 500
+def pick_best(stocks_data, html_format, month_1, month_2, stocks_data_dir):
+    path_prefix = f'{stocks_data_dir}/{html_format}/{month_2}/profiles/Yahoo/US/01/p/'
+    time = "15:30"
+    first_day, second_day, last_day = get_trade_days(f'{stocks_data_dir}/{html_format}/{month_2}')
+    trades = get_trades(stocks_data, f'{stocks_data_dir}/{html_format}/{month_2}/{first_day}/close')
+    for volume, symbol in trades:
+        print(f"{html_format}-{month_2}-{second_day} {time} buy {volume} shares of {symbol}")
+    for volume, symbol in trades:
+        print(f"{html_format}-{month_2}-{last_day} {time} sell {volume} shares of {symbol}")
     
 def load_stocks_data(stocks_data_path):
     data = []
@@ -98,13 +116,13 @@ def set_final_score(stocks_data, industry_data):
         max_value = 15
         stock_data['score'] = max_value-(f_score+g_score+magic_score)
 
-def log_final_res(html_format, tmp_dir):
+def log_final_res(html_format, month_1, month_2, tmp_dir, stocks_data_dir):
     stocks_data_path = f"{tmp_dir}/stocks_data_{html_format}.jsonlines"
     stocks_data = load_stocks_data(stocks_data_path)
     industry_data = load_industry_data(stocks_data)
     set_final_score(stocks_data, industry_data)
     stocks_data.sort(key=lambda stock_data: stock_data['score'])
-    pick_best(stocks_data)
+    pick_best(stocks_data, html_format, month_1, month_2, stocks_data_dir)
 
 if __name__ == "__main__":
-    log_final_res(sys.argv[1], sys.argv[2])
+    log_final_res(*sys.argv[1:])

@@ -9,17 +9,16 @@ from scrapy_tutorials.items import Fundamentals
 class ProfilesSpider(scrapy.Spider):
     name = "profiles_2006"
     def start_requests(self):
-        path_prefix = self.stocks_data_dir
+        path_prefix = f'{self.stocks_data_dir}/{self.html_format}/{self.month_2}/profiles/Yahoo/US/01/p/'
         for alphabet in ascii_lowercase:
-            counter = 2
-            mypath = path_prefix + '/profiles/Yahoo/US/01/p/' + alphabet
-            for dirpath, dirnames, filenames in walk(mypath):
+            # counter = 5
+            for dirpath, dirnames, filenames in walk(path_prefix + alphabet):
                 for filename in filenames:
                     if filename.count('.') > 1 or len(filename.split('.')[0]) < 3: continue
-                    counter -= 1
-                    if not counter:
-                        break
-                    yield scrapy.Request(url=f'file://{mypath}/{filename}')
+                    # counter -= 1
+                    # if not counter:
+                    #     break
+                    yield scrapy.Request(url=f'file://{path_prefix}{alphabet}/{filename}')
 
     def get_symbol(self, response):
         """

@@ -108,3 +108,6 @@ cd ~/stocks/2006/10
 <!-- ~/keystone/run.sh 2006 ~/tmp_dir -->
 ~/keystone/run.sh 2006 ~/tmp_dir | adversary 2006/11
 adversary 2006/11 /home/vbharot/keystone/tmp/final_results/2006-trades.txt
+
+
+- handle missing args or incorrect args
