@@ -111,7 +111,6 @@ class ProfilesSpider(scrapy.Spider):
 
         return self.extract_value_from_key_sibling_2(earnings_mrq_selectors[0])
 
-    # TODO: finalize 3-month or 10-day average
     def extract_daily_volume(self, response):
         daily_volume_selectors = response.xpath("//*[contains(text(), 'Average Volume')]")
         if not daily_volume_selectors:
@@ -304,7 +303,6 @@ class ProfilesSpider(scrapy.Spider):
             
             fundamentals['book_value_mrq'] = self.extract_book_value_mrq(response)
             
-            # TODO: how to normalize book value
          #   fundamentals['earnings_ttm'] = self.extract_earnings_ttm(response)
          #   fundamentals['earnings_mrq'] = self.extract_earnings_mrq(response)
          

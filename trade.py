@@ -31,7 +31,7 @@ def get_trade_days(month_path):
     str_days = sorted(day for day in str_days_and_profiles if day.isdigit())
     return (str_days[0], str_days[1], str_days[-1])
 
-def get_trades(stocks_data, prev_day_close_path, count=20):
+def get_trades(stocks_data, prev_day_close_path, count=50):
     trades = []
     close_data = [line.split() for line in open(prev_day_close_path).readlines()]
     for stock_data in stocks_data:
@@ -42,9 +42,10 @@ def get_trades(stocks_data, prev_day_close_path, count=20):
         if low_p != 'N/A' and high_p != 'N/A': 
             price = (float(low_p) + float(high_p))/2
 
+        if price == 'N/A' or not float(price): continue
         max_vol = floor(float(volume)/100)
-        if price == 'N/A': continue
-        trade_vol = min(max_vol, floor(5000/float(price)))
+        trade_vol = min(max_vol, floor(2000/float(price)))
+        # trade_vol = floor(5000/float(price))
         if not trade_vol: continue
         trades.append((trade_vol, symbol))
         count -= 1
@@ -59,6 +60,7 @@ def pick_best(stocks_data, html_format, month_1, month_2, stocks_data_dir):
     trades = get_trades(stocks_data, f'{stocks_data_dir}/{html_format}/{month_2}/{first_day}/close')
     for volume, symbol in trades:
         print(f"{html_format}-{month_2}-{second_day} {time} buy {volume} shares of {symbol}")
+        # print(f"{html_format}-{month_2}-{second_day} {time} buy {volume} shares of {symbol}")
     for volume, symbol in trades:
         print(f"{html_format}-{month_2}-{last_day} {time} sell {volume} shares of {symbol}")
     
@@ -110,14 +112,17 @@ def load_industry_data(stocks_data):
 
 def set_final_score(stocks_data, industry_data):
     for stock_data in stocks_data:
+        # if stock_data['symbol'] in ('TEX'):
+        #     print(stock_data)
         f_score = get_F_score(stock_data)
         g_score = get_G_score(stock_data, industry_data)
         magic_score =stock_data["magic_score"] if -1 <  stock_data["magic_score"] < 1 else 0 
         max_value = 15
         stock_data['score'] = max_value-(f_score+g_score+magic_score)
+        # print(stock_data['symbol'], stock_data['score'])
 
 def log_final_res(html_format, month_1, month_2, tmp_dir, stocks_data_dir):
-    stocks_data_path = f"{tmp_dir}/stocks_data_{html_format}.jsonlines"
+    stocks_data_path = f"{tmp_dir}stocks_data_{html_format}-{month_2}.jsonlines"
     stocks_data = load_stocks_data(stocks_data_path)
     industry_data = load_industry_data(stocks_data)
     set_final_score(stocks_data, industry_data)
