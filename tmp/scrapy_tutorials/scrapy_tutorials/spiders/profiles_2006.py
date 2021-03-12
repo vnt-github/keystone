@@ -19,6 +19,7 @@ class ProfilesSpider(scrapy.Spider):
                     # if not counter:
                     #     break
                     yield scrapy.Request(url=f'file://{path_prefix}{alphabet}/{filename}')
+        # yield scrapy.Request(url=f'file://{path_prefix}g/GOOG.html')
 
     def get_symbol(self, response):
         """
@@ -155,6 +156,15 @@ class ProfilesSpider(scrapy.Spider):
         # these each quaterly value need to be sum verify the Revenue (ttm) and sum of Total Revenue
         values = map(self.convert_str_to_number, total_assets_selectors.xpath("../td/b/text()").getall()[1:])
         return sum(each*1000 for each in values if each is not None)
+
+    # to calculate the ∆ROA for f score
+    def extract_quarterly_total_liabilities(self, response):
+        q_total_liabilities_selectors = response.xpath("//*[contains(text(), 'Total Liabilities')]")
+        if not q_total_liabilities_selectors:
+            # print(f'symbol: {self.symbol} missing Total Liabilities')
+            return
+        values = map(self.convert_str_to_number, q_total_liabilities_selectors[0].xpath("../../td/b/text()").getall()[1:])
+        return list(each*1000 if each is not None else None for each in values)
 
     def extract_net_income(self, response):
         net_income_selectors = response.xpath("//*[contains(text(), 'Net Income (ttm):')]")
@@ -330,6 +340,7 @@ class ProfilesSpider(scrapy.Spider):
             fundamentals['quarterly_current_liabilities'] = self.extract_quarterly_current_liabilities(response)
             fundamentals['quarterly_gross_profit'] = self.extract_quarterly_gross_profit(response)
             fundamentals['quarterly_total_revenue'] = self.extract_quarterly_total_revenue(response)
+            fundamentals['quarterly_total_liabilities'] = self.extract_quarterly_total_liabilities(response)
             yield fundamentals
         except Exception as err:
             traceback.print_exc()

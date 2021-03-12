@@ -19,11 +19,11 @@ def get_G_score(data, industries):
 def get_F_score(data):
     f1 = 1 if (data['return_on_asset'] and data['return_on_asset'] > 0) else 0
     f2 = 1 if (data['operational_cash_flow'] and data['operational_cash_flow'] > 0) else 0
-    f3 = data['delta_roa']
+    f3 = data['delta_roa_6']
     f4 = 1 if (data['return_on_asset'] and data['operational_cash_flow'] and data['operational_cash_flow'] > data['return_on_asset']) else 0
-    f5 = data['delta_leverage']
-    f6 = data['delta_liquid']
-    f8 = data['delta_margin']
+    f5 = data['delta_leverage_6']
+    f6 = data['delta_liquid_6']
+    f8 = data['delta_margin_6']
     return f1 + f2 + f3 + f4 + f5 + f6 + f8
 
 def get_trade_days(month_path):
@@ -42,10 +42,11 @@ def get_trades(stocks_data, prev_day_close_path, count=50):
         if low_p != 'N/A' and high_p != 'N/A': 
             price = (float(low_p) + float(high_p))/2
 
+        each_price = floor(100000/count)
         if price == 'N/A' or not float(price): continue
         max_vol = floor(float(volume)/100)
-        trade_vol = min(max_vol, floor(2000/float(price)))
-        # trade_vol = floor(5000/float(price))
+        # trade_vol = min(max_vol, floor(2000/float(price)))
+        trade_vol = floor(each_price/float(price))
         if not trade_vol: continue
         trades.append((trade_vol, symbol))
         count -= 1
@@ -116,7 +117,7 @@ def set_final_score(stocks_data, industry_data):
         #     print(stock_data)
         f_score = get_F_score(stock_data)
         g_score = get_G_score(stock_data, industry_data)
-        magic_score =stock_data["magic_score"] if -1 <  stock_data["magic_score"] < 1 else 0 
+        magic_score = 0 # stock_data["magic_score"] if -1 <  stock_data["magic_score"] < 1 else 0 
         max_value = 15
         stock_data['score'] = max_value-(f_score+g_score+magic_score)
         # print(stock_data['symbol'], stock_data['score'])

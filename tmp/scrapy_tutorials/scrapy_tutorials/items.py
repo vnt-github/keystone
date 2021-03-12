@@ -30,17 +30,23 @@ class Fundamentals(Item):
     quarterly_net_income = Field()
     quarterly_total_assets = Field()
     delta_roa = Field()
+    delta_roa_6 = Field()
+
     quarterly_long_term_debt = Field()
     delta_leverage = Field()
+    delta_leverage_6 = Field()
+    
     quarterly_current_assets = Field()
     quarterly_current_liabilities = Field()
     delta_liquid = Field()
+    delta_liquid_6 = Field()
+    
     quarterly_gross_profit = Field()
     quarterly_total_revenue = Field()
     delta_margin = Field()
+    delta_margin_6 = Field()
+    
     ebitda = Field()
     enterprise_value = Field()
     magic_score = Field()
-
-    
-
+    quarterly_total_liabilities = Field()
