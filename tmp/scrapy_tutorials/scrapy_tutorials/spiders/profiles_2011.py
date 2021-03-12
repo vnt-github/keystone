@@ -6,7 +6,7 @@ from string import ascii_lowercase
 from scrapy_tutorials.items import Fundamentals
 
 class ProfilesSpider(scrapy.Spider):
-    name = "profiles_2006"
+    name = "profiles_2011"
     def start_requests(self):
         path_prefix = f'{self.stocks_data_dir}/{self.html_format}/{self.month_2}/profiles/Yahoo/US/01/p/'
         for alphabet in ascii_lowercase:
@@ -19,7 +19,7 @@ class ProfilesSpider(scrapy.Spider):
                     #     break
                     yield scrapy.Request(url=f'file://{path_prefix}{alphabet}/{filename}')
         # yield scrapy.Request(url=f'file://{path_prefix}g/GOOG.html')
-
+        
     def get_symbol(self, response):
         """
         Return symbol associated
@@ -32,7 +32,7 @@ class ProfilesSpider(scrapy.Spider):
         value = key_selector.xpath("./following-sibling::td/text()").get()
         industry = key_selector.xpath("./following-sibling::td[5]/text()").get()
         return self.convert_str_to_number(value) if value != 'N/A' else None, self.convert_str_to_number(industry) if industry != 'N/A' else None
-
+    
     @staticmethod
     def convert_str_to_number(num):
         try:
@@ -56,7 +56,7 @@ class ProfilesSpider(scrapy.Spider):
         except Exception as err:
             # print('sibling extraction err', err)
             return
-
+    
     def extract_value_from_key_sibling_2(self, key_selector):
         try:
             #sign = -1 if key_selector.xpath("./following-sibling::td/text()").get() == '-' else 1
@@ -67,7 +67,7 @@ class ProfilesSpider(scrapy.Spider):
         except Exception as err:
             # print('sibling extraction err', err)
             return
-
+    
     def extract_low_price(self, response):
         """
         Return extracted low price by from profile
@@ -104,15 +104,15 @@ class ProfilesSpider(scrapy.Spider):
         return self.extract_value_from_key_sibling(earnings_ttm_selectors[0])
    
     def extract_earnings_mrq(self, response):
-        earnings_mrq_selectors = response.xpath("//*[contains(text(), 'EPS Est')]")
+        earnings_mrq_selectors = response.xpath("//*[contains(text(), 'Earnings')]/*[contains(text(), '(mrq)')]/..")
         if not earnings_mrq_selectors:
             # print(f'symbol: {self.symbol} missing Earnings (mrq)')
             return
 
-        return self.extract_value_from_key_sibling_2(earnings_mrq_selectors[0])
+        return self.extract_value_from_key_sibling(earnings_mrq_selectors[0])
 
     def extract_daily_volume(self, response):
-        daily_volume_selectors = response.xpath("//*[contains(text(), 'Average Volume')]")
+        daily_volume_selectors = response.xpath("//*[contains(text(), 'Avg Vol')]")
         if not daily_volume_selectors:
             # print(f'symbol: {self.symbol} missing Daily Volume (3-month avg)')
             return
@@ -153,16 +153,16 @@ class ProfilesSpider(scrapy.Spider):
             # print(f'symbol: {self.symbol} missing Total Assets')
             return
         # these each quaterly value need to be sum verify the Revenue (ttm) and sum of Total Revenue
-        values = map(self.convert_str_to_number, total_assets_selectors.xpath("../td/b/text()").getall()[1:])
+        values = list(map(self.convert_str_to_number, total_assets_selectors.xpath("../td/strong/text()").getall()[1:]))
         return sum(each*1000 for each in values if each is not None)
-
+    
     # to calculate the ∆ROA for f score
     def extract_quarterly_total_liabilities(self, response):
         q_total_liabilities_selectors = response.xpath("//*[contains(text(), 'Total Liabilities')]")
         if not q_total_liabilities_selectors:
             # print(f'symbol: {self.symbol} missing Total Liabilities')
             return
-        values = list(map(self.convert_str_to_number, q_total_liabilities_selectors[0].xpath("../../td/b/text()").getall()[1:]))
+        values = list(map(self.convert_str_to_number, q_total_liabilities_selectors[0].xpath("../../td/strong/text()").getall()[1:]))
         return [each*1000 if each is not None else None for each in values]
 
     def extract_net_income(self, response):
@@ -178,7 +178,7 @@ class ProfilesSpider(scrapy.Spider):
             # print(f'symbol: {self.symbol} missing Qtrly Earnings Growth (yoy):')
             return
         return self.extract_value_from_key_sibling(earnings_growth_selectors)
-            
+
 
     def extract_sales_growth(self, response):
         sales_growth_selectors = response.xpath("//*[contains(text(), 'Sales Growth (year/est)')]")
@@ -224,7 +224,7 @@ class ProfilesSpider(scrapy.Spider):
             # print(f'symbol: {self.symbol} missing Enterprise Value')
             return
         return self.extract_value_from_key_sibling(enterprise_selectors[0])
-
+    
     # to calculate the ∆ROA for f score
     def extract_quarterly_total_assets(self, response):
         q_total_assets_selectors = response.xpath("//*[contains(text(), 'Total Assets')]")
@@ -235,14 +235,14 @@ class ProfilesSpider(scrapy.Spider):
         return list(each*1000 if each is not None else None for each in values)
 
 
-    # to calculate the ∆ROA for f score
+        # to calculate the ∆ROA for f score
     def extract_quarterly_net_income(self, response):
         q_net_income_selectors = response.xpath("//*[contains(text(), 'Net Income Applicable To Common Shares')]")
         if not q_net_income_selectors:
             # print(f'symbol: {self.symbol} missing Net Income Applicable To Common Shares')
             return
-        values = map(self.convert_str_to_number, q_net_income_selectors[0].xpath("../../td/b/text()").getall()[1:])
-        return list(each*1000 if each is not None else None for each in values)
+        values = list(map(self.convert_str_to_number, q_net_income_selectors[0].xpath("../../td/strong/text()").getall()[1:]))
+        return [each*1000 if each is not None else None for each in values]
 
     # to calculate the ∆ROA for f score
     def extract_quarterly_total_assets(self, response):
@@ -250,8 +250,8 @@ class ProfilesSpider(scrapy.Spider):
         if not q_total_assets_selectors:
             # print(f'symbol: {self.symbol} missing Total Assets')
             return
-        values = map(self.convert_str_to_number, q_total_assets_selectors[0].xpath("../../td/b/text()").getall()[1:])
-        return list(each*1000 if each is not None else None for each in values)
+        values = list(map(self.convert_str_to_number, q_total_assets_selectors[0].xpath("../../td/strong/text()").getall()[1:]))
+        return [each*1000 if each is not None else None for each in values]
 
     # to calculate the ∆LEVER for f score
     def extract_quarterly_long_term_debt(self, response):
@@ -259,8 +259,8 @@ class ProfilesSpider(scrapy.Spider):
         if len(q_long_term_debt_selectors) < 2:
             # print(f'symbol: {self.symbol} missing Total Assets')
             return
-        values = map(self.convert_str_to_number, q_long_term_debt_selectors[1].xpath("../td/text()").getall()[1:])
-        return list(each*1000 if each is not None else None for each in values)
+        values = list(map(self.convert_str_to_number, q_long_term_debt_selectors[1].xpath("../td/text()").getall()[1:]))
+        return [each*1000 if each is not None else None for each in values] 
 
 
     # to calculate the ∆LIQUID for f score
@@ -269,8 +269,8 @@ class ProfilesSpider(scrapy.Spider):
         if not q_current_assets_selectors:
             # print(f'symbol: {self.symbol} missing Total Current Assets')
             return
-        values = map(self.convert_str_to_number, q_current_assets_selectors[0].xpath("../../td/b/text()").getall()[1:])
-        return list(each*1000 if each is not None else None for each in values)
+        values = list(map(self.convert_str_to_number, q_current_assets_selectors[0].xpath("../../td/strong/text()").getall()[1:]))
+        return [each*1000 if each is not None else None for each in values]
         
     # to calculate the ∆LIQUID for f score
     def extract_quarterly_current_liabilities(self, response):
@@ -278,8 +278,8 @@ class ProfilesSpider(scrapy.Spider):
         if not q_current_liabilities_selectors:
             # print(f'symbol: {self.symbol} missing Total Current Liabilities')
             return
-        values = map(self.convert_str_to_number, q_current_liabilities_selectors[0].xpath("../../td/b/text()").getall()[1:])
-        return list(each*1000 if each is not None else None for each in values)
+        values = list(map(self.convert_str_to_number, q_current_liabilities_selectors[0].xpath("../../td/strong/text()").getall()[1:]))
+        return [each*1000 if each is not None else None for each in values]
         
     # to calculate the ∆MARGIN for f score
     def extract_quarterly_gross_profit(self, response):
@@ -287,8 +287,8 @@ class ProfilesSpider(scrapy.Spider):
         if len(q_gross_profit_selectors) < 2:
             # print(f'symbol: {self.symbol} missing Gross Profit')
             return
-        values = map(self.convert_str_to_number, q_gross_profit_selectors[1].xpath("../../td/b/text()").getall()[1:])
-        return list(each*1000 if each is not None else None for each in values)
+        values = list(map(self.convert_str_to_number, q_gross_profit_selectors[1].xpath("../../td/strong/text()").getall()[1:]))
+        return [each*1000 if each is not None else None for each in values]
         
     # to calculate the ∆MARGIN for f score
     def extract_quarterly_total_revenue(self, response):
@@ -296,8 +296,8 @@ class ProfilesSpider(scrapy.Spider):
         if not q_total_revenue_selectors:
             # print(f'symbol: {self.symbol} missing Total Revenue')
             return
-        values = map(self.convert_str_to_number, q_total_revenue_selectors[0].xpath("../../td/b/text()").getall()[1:])
-        return list(each*1000 if each is not None else None for each in values)
+        values = list(map(self.convert_str_to_number, q_total_revenue_selectors[0].xpath("../../td/strong/text()").getall()[1:]))
+        return [each*1000 if each is not None else None for each in values]
 
     def parse(self, response):
         try:
@@ -311,10 +311,10 @@ class ProfilesSpider(scrapy.Spider):
             fundamentals['daily_volume'] = self.extract_daily_volume(response)
             
             fundamentals['book_value_mrq'] = self.extract_book_value_mrq(response)
-            
-         #   fundamentals['earnings_ttm'] = self.extract_earnings_ttm(response)
-         #   fundamentals['earnings_mrq'] = self.extract_earnings_mrq(response)
-         
+        
+        #   fundamentals['earnings_ttm'] = self.extract_earnings_ttm(response)
+        #   fundamentals['earnings_mrq'] = self.extract_earnings_mrq(response)
+  
             #for magic
             fundamentals['ebitda'] = self.extract_ebitda(response)
             fundamentals['enterprise_value'] = self.extract_enterprise_value(response)
