@@ -58,10 +58,11 @@ def pick_best(stocks_data, html_format, month_1, month_2, stocks_data_dir):
     path_prefix = f'{stocks_data_dir}/{html_format}/{month_2}/profiles/Yahoo/US/01/p/'
     time = "15:30"
     first_day, second_day, last_day = get_trade_days(f'{stocks_data_dir}/{html_format}/{month_2}')
-    trades = get_trades(stocks_data, f'{stocks_data_dir}/{html_format}/{month_2}/{first_day}/close')
+    *_, month_1_last_day = get_trade_days(f'{stocks_data_dir}/{html_format}/{month_1}')
+    trades = get_trades(stocks_data, f'{stocks_data_dir}/{html_format}/{month_1}/{month_1_last_day}/close')
     for volume, symbol in trades:
-        print(f"{html_format}-{month_2}-{second_day} {time} buy {volume} shares of {symbol}")
-        # print(f"{html_format}-{month_2}-{second_day} {time} buy {volume} shares of {symbol}")
+        print(f"{html_format}-{month_2}-{first_day} {time} buy {volume} shares of {symbol}")
+        # print(f"{html_format}-{month_2}-{first_day} {time} buy {volume} shares of {symbol}")
     for volume, symbol in trades:
         print(f"{html_format}-{month_2}-{last_day} {time} sell {volume} shares of {symbol}")
     
