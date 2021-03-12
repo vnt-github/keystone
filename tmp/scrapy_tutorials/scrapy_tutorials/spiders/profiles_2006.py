@@ -13,7 +13,7 @@ class ProfilesSpider(scrapy.Spider):
             # counter = 2
             for dirpath, dirnames, filenames in walk(path_prefix + alphabet):
                 for filename in filenames:
-                    if filename.count('.') > 1 or len(filename.split('.')[0]) < 3: continue
+                    if filename.count('.') > 1: continue
                     # counter -= 1
                     # if not counter:
                     #     break
