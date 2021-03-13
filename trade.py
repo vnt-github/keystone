@@ -39,13 +39,14 @@ def get_trades(stocks_data, prev_day_close_path, count=50):
         prev_day_trade = next((trade for trade in close_data if trade[0] == stock_data['symbol']), None)
         if not prev_day_trade: continue
         symbol, time, price, change, per_change, volume, open_p, high_p, low_p, bid, ask = prev_day_trade
+        # if len(symbol) < 2: continue # 2006 10 11 uses N whose ticker does not exists and gives loss
         if low_p != 'N/A' and high_p != 'N/A': 
             price = (float(low_p) + float(high_p))/2
 
         each_price = floor(100000/count)
         if price == 'N/A' or not float(price): continue
         max_vol = floor(float(volume)/100)
-        # trade_vol = min(max_vol, floor(2000/float(price)))
+        # trade_vol = min(max_vol, floor(each_price/float(price)))
         trade_vol = floor(each_price/float(price))
         if not trade_vol: continue
         trades.append((trade_vol, symbol))
