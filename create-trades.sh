@@ -5,8 +5,8 @@ MONTH_1_DIR=$2
 MONTH_2_DIR=$3
 TMP_DIR=$4
 
-if [ $HTML_FORMAT = 2001 ] ; then
-    echo "2001 stocks data profiles doesn't have enough inforamation like quarterly values of various field which are needed to make f,g and magic_score values"
+if [[ $HTML_FORMAT = 2001 || $HTML_FORMAT = 2016 ]] ; then
+    echo $HTML_FORMAT "stocks data profiles doesn't have enough inforamation like quarterly values of various field which are needed to make f,g and magic_score values"
     exit
 fi
 
