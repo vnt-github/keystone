@@ -59,10 +59,10 @@ def pick_best(stocks_data, html_format, month_1, month_2, stocks_data_dir):
     path_prefix = f'{stocks_data_dir}/{html_format}/{month_2}/profiles/Yahoo/US/01/p/'
     time = "15:30"
     first_day, second_day, last_day = get_trade_days(f'{stocks_data_dir}/{html_format}/{month_2}')
-    *_, month_1_last_day = get_trade_days(f'{stocks_data_dir}/{html_format}/{month_1}')
-    trades = get_trades(stocks_data, f'{stocks_data_dir}/{html_format}/{month_1}/{month_1_last_day}/close')
+    close_first, close_second, close_last = get_trade_days(f'{stocks_data_dir}/{html_format}/{month_2}')
+    trades = get_trades(stocks_data, f'{stocks_data_dir}/{html_format}/{month_2}/{close_first}/close')
     for volume, symbol in trades:
-        print(f"{html_format}-{month_2}-{first_day} {time} buy {volume} shares of {symbol}")
+        print(f"{html_format}-{month_2}-{second_day} {time} buy {volume} shares of {symbol}")
         # print(f"{html_format}-{month_2}-{first_day} {time} buy {volume} shares of {symbol}")
     for volume, symbol in trades:
         print(f"{html_format}-{month_2}-{last_day} {time} sell {volume} shares of {symbol}")
@@ -119,7 +119,12 @@ def set_final_score(stocks_data, industry_data):
         #     print(stock_data)
         f_score = get_F_score(stock_data)
         g_score = get_G_score(stock_data, industry_data)
-        magic_score = 0 # stock_data["magic_score"] if -1 <  stock_data["magic_score"] < 1 else 0 
+        magic_score = stock_data["magic_score"] if -1 <  stock_data["magic_score"] < 1 else 0 
+
+        if stock_data['book_value_mrq'] and stock_data['price']:
+            stock_data['bm_ratio'] = stock_data["book_value_mrq"]/stock_data["price"]
+        else:
+            stock_data['bm_ratio'] = None
         max_value = 15
         stock_data['score'] = max_value-(f_score+g_score+magic_score)
         # print(stock_data['symbol'], stock_data['score'])
@@ -130,6 +135,7 @@ def log_final_res(html_format, month_1, month_2, tmp_dir, stocks_data_dir):
     industry_data = load_industry_data(stocks_data)
     set_final_score(stocks_data, industry_data)
     stocks_data.sort(key=lambda stock_data: stock_data['score'])
+    # stocks_data = sorted(filter(lambda each: each['bm_ratio'], stocks_data), key=lambda stock_data: stock_data['bm_ratio']*stock_data["score"], reverse=True)
     pick_best(stocks_data, html_format, month_1, month_2, stocks_data_dir)
 
 if __name__ == "__main__":
