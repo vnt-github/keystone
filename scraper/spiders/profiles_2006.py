@@ -10,13 +10,13 @@ class ProfilesSpider(scrapy.Spider):
     def start_requests(self):
         path_prefix = f'{self.stocks_data_dir}/{self.html_format}/{self.month_2}/profiles/Yahoo/US/01/p/'
         for alphabet in ascii_lowercase:
-            # counter = 2
+            counter = 2
             for dirpath, dirnames, filenames in walk(path_prefix + alphabet):
                 for filename in filenames:
                     if filename.count('.') > 1: continue
-                    # counter -= 1
-                    # if not counter:
-                    #     break
+                    counter -= 1
+                    if not counter and hasattr(self, 'is_testing'):
+                        break
                     yield scrapy.Request(url=f'file://{path_prefix}{alphabet}/{filename}')
         # yield scrapy.Request(url=f'file://{path_prefix}g/GOOG.html')
 
