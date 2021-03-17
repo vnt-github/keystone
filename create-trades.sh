@@ -19,8 +19,11 @@ MONTH_1=$(basename $MONTH_1_DIR)
 MONTH_2=$(basename $MONTH_2_DIR)
 
 cd ${CODE_DIR%create-trades.sh}/scraper
-source ${CODE_DIR%create-trades.sh}/venvs/tutorials/bin/activate
- 
+
+python3 -m venv $TMP_DIR/run_env
+source $TMP_DIR/run_env/bin/activate
+pip3 -q install -r ../requirements.txt
+
 CRAWS_RES=$(scrapy crawl profiles_$HTML_FORMAT -a is_testing=True -a html_format=$HTML_FORMAT -a month_1=$MONTH_1 -a month_2=$MONTH_2 -a tmp_dir=$TMP_DIR -a stocks_data_dir=$STOCKS_DATA_DIR --overwrite-output=$TMP_DIR/stocks_data_$HTML_FORMAT-$MONTH_2.jsonlines --loglevel=ERROR)
 if $CRAWS_RES ; then
     cd ../

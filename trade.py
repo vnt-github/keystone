@@ -130,7 +130,7 @@ def set_final_score(stocks_data, industry_data):
         # print(stock_data['symbol'], stock_data['score'])
 
 def log_final_res(html_format, month_1, month_2, tmp_dir, stocks_data_dir):
-    stocks_data_path = f"{tmp_dir}stocks_data_{html_format}-{month_2}.jsonlines"
+    stocks_data_path = f"{tmp_dir}/stocks_data_{html_format}-{month_2}.jsonlines"
     stocks_data = load_stocks_data(stocks_data_path)
     industry_data = load_industry_data(stocks_data)
     set_final_score(stocks_data, industry_data)
