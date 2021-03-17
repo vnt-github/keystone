@@ -2,19 +2,24 @@ import numpy as np
 
 class FundamentalsPipeline(object):
     def normalize_by_price(self, value, price):
+        "normalize given value by stock price"
         if not value or not price: return
         return value/price
 
     def normal_distribution(self, high, low):
+        "pick normally distributed price value between high and low"
         if not high or not low: return
-        mean, standard_deviation = (high+low)/2, 0.1 # mean and standard deviation
+        mean, standard_deviation = (high+low)/2, 0 # mean and standard deviation
+        # NOTE: we want consistent price value to compare different results wrt different bm_ratio, which is consistent in between runs hence 0 deviation
         return np.random.normal(mean, standard_deviation)
 
     def get_cash_roa(self, operational_cash_flow, total_assets):
+        "calcuate and return cash return on asset"
         if not operational_cash_flow or not total_assets: return
         return operational_cash_flow/total_assets*100
 
     def get_delta_ratio(self, a, b, sign=1):
+        "generic function to calculate quarterly delta value change for a/b ratio"
         deltas = 0
         if not a or not b: return 0
         for i in range(len(a)-1):
@@ -26,24 +31,26 @@ class FundamentalsPipeline(object):
         return int(deltas > 0)
 
     def get_delta_ratio_6(self, a, b, should_increase=1):
+        "generic function to calculate half yearly delta value change for a/b ratio"
         should_increase = (should_increase == 1)
         if not a or not b or not all(a) or not all(b) or not sum(b[2:]) or not sum(b[:2]): return 0
         has_increased = sum(a[:2])/sum(b[:2]) > sum(a[2:])/sum(b[2:])
         return 1 if ((has_increased and should_increase) or (not has_increased and not should_increase)) else 0
 
-    # calculating delta roa here for f score because we don't need any aggregation from other data
     def get_delta_roa(self, quarterly_net_income, quarterly_total_assets):
+        " calculating delta roa here for f score because we don't need any aggregation from other data"
         return self.get_delta_ratio(quarterly_net_income, quarterly_total_assets), self.get_delta_ratio_6(quarterly_net_income, quarterly_total_assets)
 
-    # calculating delta leverage here for f score because we don't need any aggregation from other data
     def get_delta_leverage(self, quarterly_long_term_debt, quarterly_total_assets):
+        "calculating delta leverage here for f score because we don't need any aggregation from other data"
         return self.get_delta_ratio(quarterly_long_term_debt, quarterly_total_assets, -1), self.get_delta_ratio_6(quarterly_long_term_debt, quarterly_total_assets, -1)
 
-    # calculating delta roa here for f score because we don't need any aggregation from other data
     def get_delta_liquid(self, quarterly_current_assets, quarterly_current_liabilities):
+        "calculating delta roa here for f score because we don't need any aggregation from other data"
         return self.get_delta_ratio(quarterly_current_assets, quarterly_current_liabilities), self.get_delta_ratio_6(quarterly_current_assets, quarterly_current_liabilities)
 
     def get_delta_margin(self, quarterly_gross_profit, quarterly_total_revenue):
+        "calculating delta margin here for f score because we don't need any aggregation from other data"
         return self.get_delta_ratio(quarterly_gross_profit, quarterly_total_revenue), self.get_delta_ratio_6(quarterly_gross_profit, quarterly_total_revenue)
 
     def get_magic_score(self, ebitda, enterprise_value):
@@ -51,6 +58,15 @@ class FundamentalsPipeline(object):
         return ebitda/enterprise_value
 
     def process_item(self, item, spider):
+        """
+        This method is called for every item pipeline component.
+        We use this to populate fundamental values which are derived from other fundamentals value.
+            Parameters:
+                item (item object) – the scraped item
+                spider (Spider object) – the spider which scraped the item
+            Return:
+                Object: item with additional fields
+        """
         item['price'] = self.normal_distribution(item['high_price'], item['low_price'])
         # item['earnings_ttm_per_price'] = self.normalize_by_price(item['earnings_ttm'], item['price'])
         # item['earnings_mrq_per_price'] = self.normalize_by_price(item['earnings_mrq'], item['price'])
