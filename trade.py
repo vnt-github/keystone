@@ -2,7 +2,7 @@ import json, sys
 from collections import defaultdict
 from statistics import median
 from os import walk
-from math import floor
+from math import floor, ceil
 
 def get_G_score(data, industries):
     """
@@ -195,11 +195,10 @@ def set_final_score(stocks_data, industry_data):
             stock_data['bm_ratio'] = stock_data["book_value_mrq"]/stock_data["price"]
         else:
             stock_data['bm_ratio'] = None
-        max_value = 15
-        stock_data['score'] = max_value-(f_score+g_score+magic_score)
+        stock_data['score'] = (f_score+g_score+magic_score)
         # print(stock_data['symbol'], stock_data['score'])
 
-def log_final_res(html_format, month_1, month_2, tmp_dir, stocks_data_dir, count=40):
+def log_final_res(html_format, month_1, month_2, tmp_dir, stocks_data_dir, count=45):
     """
     main driver function which calls other functions to log the final tradings to stdout.
     
@@ -212,13 +211,20 @@ def log_final_res(html_format, month_1, month_2, tmp_dir, stocks_data_dir, count
     Returns:
         None: it logs the results to stdout.
     """
+    count = int(count)
     stocks_data_path = f"{tmp_dir}/stocks_data_{html_format}-{month_2}.jsonlines"
     stocks_data = load_stocks_data(stocks_data_path)
     industry_data = load_industry_data(stocks_data)
     set_final_score(stocks_data, industry_data)
-    stocks_data.sort(key=lambda stock_data: stock_data['score'])
-    # stocks_data = sorted(filter(lambda each: each['bm_ratio'], stocks_data), key=lambda stock_data: stock_data['bm_ratio']*stock_data["score"], reverse=True)
-    pick_best(stocks_data, html_format, month_1, month_2, stocks_data_dir, int(count))
+
+    stocks_data = sorted(filter(lambda stock_data: stock_data['bm_ratio'], stocks_data), key=lambda stock_data: stock_data['bm_ratio'])
+    ninety_percentile_size = ceil(0.1*len(stocks_data))
+    stocks_size = min(ninety_percentile_size, count*4)
+    stocks_data = stocks_data[:stocks_size]
+
+    stocks_data.sort(key=lambda stock_data: stock_data['score'], reverse=True)
+    
+    pick_best(stocks_data, html_format, month_1, month_2, stocks_data_dir, count)
 
 if __name__ == "__main__":
     log_final_res(*sys.argv[1:])
