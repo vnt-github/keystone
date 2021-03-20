@@ -2,6 +2,7 @@
 import math
 import sys
 
+# Opens file specified in args which consists of lists of trade.
 filename = sys.argv[-1]
 f = open(filename, "r")
 transactions = f.readlines()
@@ -9,9 +10,11 @@ tlist = []
 for x in transactions :
     tlist.append(x.split())
 
+# Splits transactions into buy and sell. 
 tlist_buy = [z for z in tlist if z[2] == 'buy']
 tlist_sell = [z for z in tlist if z[2] != 'buy']
 
+#Opens streaming file based on the transaction datestamp.
 path = tlist_buy[0][0].split('-')
 f = open("{}/{}/{}/streaming.tsv".format(path[0],path[1],path[2]), "r")
 
@@ -22,6 +25,7 @@ for x in streaming :
 
 buy_list = []
 
+# Function to calculate the closest streaming quote in case of missing transactions at a given timestamp.
 def trans_before(transaction):
     highest_time = '00:00'
     trans = []
@@ -54,6 +58,7 @@ def trans_before(transaction):
    # print(record)
     return record
 
+#Populates items in buy_list with relevant data required later for calculations.
 for i in range(len(tlist_buy)) :
     flag_buy = False
     buy_record = []
@@ -77,6 +82,7 @@ for i in range(len(tlist_buy)) :
         buy_record = trans_before(tlist_buy[i])
     buy_list.append(buy_record)
 
+#Function to calculate beta and DCV for stocks with missing bid ask quotes.
 def calc_bidask(stock):
     vol = 0
     trans = []
@@ -108,6 +114,7 @@ for entry in buy_list:
     else:
         entry.append('0')
 
+#Function to calculate exact buy/sell price for transcations with higher than 1% DCV transactions.
 def correct_price(trans,op):           #op = 1 buy, 0 sell 
     ask = float(trans[7])
     bid = float(trans[6])
@@ -136,6 +143,7 @@ def correct_price(trans,op):           #op = 1 buy, 0 sell
 
 total_asset = 100000
 
+#Function to perform buy operations maintaining all constraints.
 def execute_buy(buy_list, total_asset):
     counter = 1
     act_balance = total_asset
@@ -173,10 +181,12 @@ def execute_buy(buy_list, total_asset):
                 print("{} {} purchase requires cash ${}\n##### ERROR : NOT ENOUGH BALANCE TO PROCEED WITH THIS TRANSACTION. #####".format(item[4],item[2],tot_cost))
     return total_asset, stock_list
 
+#Updates the assets remaining after executing all operations in the buy list and the corresponding holdings.
 total_asset, holdings = execute_buy(buy_list, total_asset)
 
 path = tlist_sell[0][0].split('-')
 
+#Reopens the streaming file for sell transactions.
 f = open("{}/{}/{}/streaming.tsv".format(path[0],path[1],path[2]), "r")
 streaming = f.readlines()
 slist = []
@@ -208,6 +218,7 @@ for i in range(len(tlist_sell)) :
         sell_record = trans_before(tlist_sell[i])
     sell_list.append(sell_record)
 
+ #For quotes with missing bid/ask, gets those values from calculating beta and DCV.
 for entry in sell_list:
     get_beta,dcv = calc_bidask(entry[2])
     if entry[-1] == 'N/A':
@@ -219,6 +230,7 @@ for entry in sell_list:
     else:
         entry.append('0')
 
+#Function to perform sell operations with all contraints maintained.
 def execute_sell(sell_list, total_asset):
     counter = 1
     act_balance = total_asset
@@ -254,6 +266,8 @@ def execute_sell(sell_list, total_asset):
                 print("##### ERROR : Not enough holdings of {} to sell. #####".format(item[2]))
     return total_asset
 
+#Updates total assets after performing buy operations.
 total_asset = execute_sell(sell_list, total_asset)
-print("\nAccount Status : Cash Balance is : ${}\n".format(total_asset))
 
+#Prints the final balance after all transactions.
+print("\nAccount Status : Cash Balance is : ${}\n".format(total_asset))
