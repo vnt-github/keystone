@@ -53,7 +53,7 @@ def get_trade_days(month_path):
     str_days = sorted(day for day in str_days_and_profiles if day.isdigit())
     return (str_days[0], str_days[1], str_days[-1])
 
-def get_trades(stocks_data, prev_day_close_path, count=50):
+def get_trades(stocks_data, prev_day_close_path, count):
     """
     picks the best stocks for trading according the stocks data which is sorted in descending order of scores.
     trades affordable stocks volume according to the previous day's close price.
@@ -85,7 +85,7 @@ def get_trades(stocks_data, prev_day_close_path, count=50):
         count -= 1
     return trades
 
-def pick_best(stocks_data, html_format, month_1, month_2, stocks_data_dir):
+def pick_best(stocks_data, html_format, month_1, month_2, stocks_data_dir, count):
     """
     call the stock picker based on stocks score and format for stdout.
         Parameters:
@@ -100,7 +100,7 @@ def pick_best(stocks_data, html_format, month_1, month_2, stocks_data_dir):
     time = "15:30"
     first_day, second_day, last_day = get_trade_days(f'{stocks_data_dir}/{html_format}/{month_2}')
     *_, month_1_last_day = get_trade_days(f'{stocks_data_dir}/{html_format}/{month_1}')
-    trades = get_trades(stocks_data, f'{stocks_data_dir}/{html_format}/{month_1}/{month_1_last_day}/close')
+    trades = get_trades(stocks_data, f'{stocks_data_dir}/{html_format}/{month_1}/{month_1_last_day}/close', count)
     for volume, symbol in trades:
         print(f"{html_format}-{month_2}-{first_day} {time} buy {volume} shares of {symbol}")
         # print(f"{html_format}-{month_2}-{first_day} {time} buy {volume} shares of {symbol}")
@@ -192,7 +192,7 @@ def set_final_score(stocks_data, industry_data):
         stock_data['score'] = max_value-(f_score+g_score+magic_score)
         # print(stock_data['symbol'], stock_data['score'])
 
-def log_final_res(html_format, month_1, month_2, tmp_dir, stocks_data_dir):
+def log_final_res(html_format, month_1, month_2, tmp_dir, stocks_data_dir, count=40):
     """
     main driver function which calls other functions to log the final tradings to stdout.
         Parameters:
@@ -210,7 +210,7 @@ def log_final_res(html_format, month_1, month_2, tmp_dir, stocks_data_dir):
     set_final_score(stocks_data, industry_data)
     stocks_data.sort(key=lambda stock_data: stock_data['score'])
     # stocks_data = sorted(filter(lambda each: each['bm_ratio'], stocks_data), key=lambda stock_data: stock_data['bm_ratio']*stock_data["score"], reverse=True)
-    pick_best(stocks_data, html_format, month_1, month_2, stocks_data_dir)
+    pick_best(stocks_data, html_format, month_1, month_2, stocks_data_dir, int(count))
 
 if __name__ == "__main__":
     log_final_res(*sys.argv[1:])

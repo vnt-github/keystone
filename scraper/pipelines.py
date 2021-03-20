@@ -21,7 +21,7 @@ class FundamentalsPipeline(object):
     def get_delta_ratio(self, a, b, sign=1):
         "generic function to calculate quarterly delta value change for a/b ratio"
         deltas = 0
-        if not a or not b: return 0
+        if not a or not b or not all(a) or not all(b) or len(a) < 4 or len(b) < 4 or len(a) != len(b): return 0
         for i in range(len(a)-1):
             if not a[i] or not b[i] or not a[i+1] or not b[i+1]: continue
             curr_year_roa = a[i]/b[i]
@@ -33,7 +33,7 @@ class FundamentalsPipeline(object):
     def get_delta_ratio_6(self, a, b, should_increase=1):
         "generic function to calculate half yearly delta value change for a/b ratio"
         should_increase = (should_increase == 1)
-        if not a or not b or not all(a) or not all(b) or not sum(b[2:]) or not sum(b[:2]): return 0
+        if not a or not b or not all(a) or not all(b) or len(a) < 4 or len(b) < 4 or not sum(b[2:]) or not sum(b[:2]): return 0
         has_increased = sum(a[:2])/sum(b[:2]) > sum(a[2:])/sum(b[2:])
         return 1 if ((has_increased and should_increase) or (not has_increased and not should_increase)) else 0
 

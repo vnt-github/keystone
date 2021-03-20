@@ -24,8 +24,8 @@ python3 -m venv $TMP_DIR/run_env
 source $TMP_DIR/run_env/bin/activate
 pip3 -q install -r ../requirements.txt
 
-CRAWS_RES=$(scrapy crawl profiles_$HTML_FORMAT -a is_testing=True -a html_format=$HTML_FORMAT -a month_1=$MONTH_1 -a month_2=$MONTH_2 -a tmp_dir=$TMP_DIR -a stocks_data_dir=$STOCKS_DATA_DIR --overwrite-output=$TMP_DIR/stocks_data_$HTML_FORMAT-$MONTH_2.jsonlines --loglevel=ERROR)
-if $CRAWS_RES ; then
+CRAWL_RES=$(scrapy crawl profiles_$HTML_FORMAT -a html_format=$HTML_FORMAT -a month_1=$MONTH_1 -a month_2=$MONTH_2 -a tmp_dir=$TMP_DIR -a stocks_data_dir=$STOCKS_DATA_DIR --overwrite-output=$TMP_DIR/stocks_data_$HTML_FORMAT-$MONTH_2.jsonlines --loglevel=ERROR)
+if $CRAWL_RES ; then
     cd ../
     python trade.py $HTML_FORMAT $MONTH_1 $MONTH_2 $TMP_DIR $STOCKS_DATA_DIR
 fi
