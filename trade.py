@@ -7,6 +7,7 @@ from math import floor
 def get_G_score(data, industries):
     """
     Return g score for stocks data which signifies the stock's growth in comparison to its industry contemporaries based on fundamentals.
+    
     Parameters:
         data (List[Dict]): all companies profiles data.
         industries (Dist): Industry grouped stocks median data.
@@ -27,6 +28,7 @@ def get_G_score(data, industries):
 def get_F_score(data):
     """
     Return f score for stocks data which signifies the stock's growth potential based on quarterly fundamentals rate.
+    
     Parameters:
         data (List[Dict]): all companies profiles data.
     Return:
@@ -44,10 +46,11 @@ def get_F_score(data):
 def get_trade_days(month_path):
     """
     traverse the given months director and return the first, second and last trading day of the month. 
-        Parameters:
-            month_path(String): absolute months directory path
-        Return:
-            Tuple(String): (first day, second day, last day)
+        
+    Parameters:
+        month_path(String): absolute months directory path
+    Return:
+        Tuple(String): (first day, second day, last day)
     """
     _, str_days_and_profiles, _ = next(walk(month_path))
     str_days = sorted(day for day in str_days_and_profiles if day.isdigit())
@@ -57,12 +60,13 @@ def get_trades(stocks_data, prev_day_close_path, count):
     """
     picks the best stocks for trading according the stocks data which is sorted in descending order of scores.
     trades affordable stocks volume according to the previous day's close price.
-        Parameters:
-            stocks_data (List[Dict]): all companies profiles data.
-            prev_day_close_path (String): absolute close file path for the day prior to the trading day.
-            count: size of portfolio
-        Return:
-            List(Tuple(Integer, String)): the list of tuple of trading volume and corresponding symbol.
+        
+    Parameters:
+        stocks_data (List[Dict]): all companies profiles data.
+        prev_day_close_path (String): absolute close file path for the day prior to the trading day.
+        count: size of portfolio
+    Return:
+        List(Tuple(Integer, String)): the list of tuple of trading volume and corresponding symbol.
     """
     trades = []
     close_data = [line.split() for line in open(prev_day_close_path).readlines()]
@@ -88,14 +92,15 @@ def get_trades(stocks_data, prev_day_close_path, count):
 def pick_best(stocks_data, html_format, month_1, month_2, stocks_data_dir, count):
     """
     call the stock picker based on stocks score and format for stdout.
-        Parameters:
-            stocks_data (List[Dict]): all companies profiles data.
-            html_format (String): The html format corresponding to the year we are trading.
-            month_1 (String): month prior to the trading month.
-            month_2 (String): the month we are trading in.
-            stocks_data_dir (String): directory path just above the stocks years directories.
-        Returns:
-            None: it logs the results to stdout.
+
+    Parameters:
+        stocks_data (List[Dict]): all companies profiles data.
+        html_format (String): The html format corresponding to the year we are trading.
+        month_1 (String): month prior to the trading month.
+        month_2 (String): the month we are trading in.
+        stocks_data_dir (String): directory path just above the stocks years directories.
+    Returns:
+        None: it logs the results to stdout.
     """
     time = "15:30"
     first_day, second_day, last_day = get_trade_days(f'{stocks_data_dir}/{html_format}/{month_2}')
@@ -110,6 +115,7 @@ def pick_best(stocks_data, html_format, month_1, month_2, stocks_data_dir, count
 def load_stocks_data(stocks_data_path):
     """
     loads the profiles stocks data for the trading month
+    
     Parameters:
         stocks_data_path (String): full path where scraped profiles .jsonlines are saved
     Return:
@@ -126,11 +132,11 @@ def load_stocks_data(stocks_data_path):
 def load_industry_data(stocks_data):
     """
     calculate the industry group median values for parameters used in G-score.
+    
     Parameters:
         stocks_data (List[Dict]): all companies profiles data.
     Return:
         Dist: Industry grouped stocks median data.
-    Return:
     """
     industries = {}
     for data in stocks_data:
@@ -171,11 +177,12 @@ def load_industry_data(stocks_data):
 def set_final_score(stocks_data, industry_data):
     """
     associate scores composed of F-Score, G-Score and magic score to the stocks data.
-        Parameters:
-            stocks_data (List[Dict]): all companies profiles data.
-            industry_data (Dist): Industry grouped stocks median data.
-        Returns:
-            None: it populates the scores field for each of stock profile.
+    
+    Parameters:
+        stocks_data (List[Dict]): all companies profiles data.
+        industry_data (Dist): Industry grouped stocks median data.
+    Returns:
+        None: it populates the scores field for each of stock profile.
     """
     for stock_data in stocks_data:
         # if stock_data['symbol'] in ('TEX'):
@@ -195,14 +202,15 @@ def set_final_score(stocks_data, industry_data):
 def log_final_res(html_format, month_1, month_2, tmp_dir, stocks_data_dir, count=40):
     """
     main driver function which calls other functions to log the final tradings to stdout.
-        Parameters:
-            html_format (String): The html format corresponding to the year we are trading.
-            month_1 (String): month prior to the trading month.
-            month_2 (String): the month we are trading in.
-            tmp_dir (String): the only writable directory path.
-            stocks_data_dir (String): directory path just above the stocks years directories.
-        Returns:
-            None: it logs the results to stdout.
+    
+    Parameters:
+        html_format (String): The html format corresponding to the year we are trading.
+        month_1 (String): month prior to the trading month.
+        month_2 (String): the month we are trading in.
+        tmp_dir (String): the only writable directory path.
+        stocks_data_dir (String): directory path just above the stocks years directories.
+    Returns:
+        None: it logs the results to stdout.
     """
     stocks_data_path = f"{tmp_dir}/stocks_data_{html_format}-{month_2}.jsonlines"
     stocks_data = load_stocks_data(stocks_data_path)

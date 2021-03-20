@@ -61,11 +61,12 @@ class FundamentalsPipeline(object):
         """
         This method is called for every item pipeline component.
         We use this to populate fundamental values which are derived from other fundamentals value.
-            Parameters:
-                item (item object) – the scraped item
-                spider (Spider object) – the spider which scraped the item
-            Return:
-                Object: item with additional fields
+        
+        Parameters:
+            item (item object) – the scraped item
+            spider (Spider object) – the spider which scraped the item
+        Return:
+            Object: item with additional fields
         """
         item['price'] = self.normal_distribution(item['high_price'], item['low_price'])
         # item['earnings_ttm_per_price'] = self.normalize_by_price(item['earnings_ttm'], item['price'])

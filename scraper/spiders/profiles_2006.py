@@ -317,6 +317,7 @@ class ProfilesSpider(scrapy.Spider):
         """
         Crawler callbacks parse function for each scrapped URL with the response, which we used to extract relavant information.
         The scraped information is stored in Fundamentals object Item, which is stored as .jsonline in the final output file.
+        
         Parameters:
             response (Response) – the response to parse
         Return:
